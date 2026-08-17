@@ -1,0 +1,20 @@
+# Store every text file with LF in the repository, whatever the contributor's
+# platform or their core.autocrlf setting. This machine has autocrlf=true, so
+# without this the stored endings would depend on local config rather than on the
+# project — and the first clone on Linux or macOS would show whole files as
+# modified.
+* text=auto eol=lf
+
+# Never let line-ending normalisation near binaries.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+
+# Generated, and noisy in review.
+package-lock.json -diff linguist-generated

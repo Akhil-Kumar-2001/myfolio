@@ -1,0 +1,357 @@
+---
+import { getCollection } from "astro:content";
+
+const entries = (await getCollection("work", ({ data }) => data.published)).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<section class="band" id="work">
+  <div class="row">
+    <h2 class="eyebrow">Selected work</h2>
+
+    <div>
+      <div class="grid">
+      {
+        entries.map((entry, i) => (
+          <article class="card reveal" style={`--i: ${i}`}>
+            {/* Generated field in the site palette — no screenshots, and no
+                dithering: that texture belongs to someone else. */}
+            <div class="shape" data-v={i % 4} aria-hidden="true">
+              <span class="ghost">{entry.data.name}</span>
+            </div>
+
+            <div class="body">
+              <p class="meta">
+                <span class="index">{String(i + 1).padStart(3, "0")}</span>
+                <span class="slash">/</span>
+                {entry.data.year}
+              </p>
+
+              <h3 class="name">
+                <a href={`/work/${entry.id}/`}>{entry.data.name}</a>
+              </h3>
+
+              <p class="summary">{entry.data.summary}</p>
+
+              <ul class="tags">
+                {entry.data.stack.slice(0, 3).map((s) => (
+                  <li>{s}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Watermark in the bottom-right, behind the text. Decoration — the
+                same number is real text in the meta line above. */}
+            <span class="ghost-num" aria-hidden="true">
+              {String(i + 1).padStart(3, "0")}
+            </span>
+          </article>
+        ))
+      }
+      </div>
+
+      {/* Mobile only. The peeking edge of the next card is the main affordance;
+          this is the belt-and-braces version for anyone who misses it. */}
+      <p class="hint" aria-hidden="true">swipe &rarr;</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+
+  .hint {
+    display: none;
+  }
+
+  /* ---- mobile: swipeable snap carousel ----
+
+     One card at a time, locked by scroll-snap so each one settles centred
+     instead of drifting. The swipe is horizontal, so vertical scroll still
+     goes straight down the page — nothing is pinned and nothing is hijacked.
+     No JavaScript.
+
+     The 9% side padding is what lets the first and last card sit centred
+     rather than jammed against an edge, and it has to match the card's share
+     of the leftover exactly or those two end up off-centre.
+
+     The card is `100%` — of the *content* box, which the padding has already
+     narrowed to 82%. Sizing it as a percentage of the padded container instead
+     (e.g. `88%`) double-counts the padding and pushes card 1 and card 4 ~20px
+     off centre, which is exactly the bug this replaced. */
+  @media (max-width: 47.99rem) {
+    .grid {
+      display: flex;
+      gap: 0.75rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding-inline: 9%;
+      /* Stops a sideways swipe triggering the browser's back gesture. */
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+    }
+
+    .grid::-webkit-scrollbar {
+      display: none;
+    }
+
+    .card {
+      flex: 0 0 100%;
+      scroll-snap-align: center;
+      /* The reveal animation is view()-driven and misfires inside a
+         horizontally scrolled container. */
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+
+    .hint {
+      display: block;
+      margin: 0.9rem 0 0;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.1em;
+      color: var(--faint);
+    }
+  }
+
+  /* An even grid rather than a full-width lead card. With four projects the
+     lead card left the fourth stranded alone in a half-empty row. RideSense
+     still leads by sitting first. */
+  @media (min-width: 48rem) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* Rounded, with the thumb inset by the card's own padding so there's card
+     surface visible above and to either side of it. Note this is the only
+     rounded surface on the site; everything else is square hairlines. */
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    /* Clips the watermark numeral to the rounded corner — it bleeds past the
+       bottom-right edge on purpose. */
+    overflow: hidden;
+    background: rgba(29, 32, 36, 0.4);
+    transition:
+      border-color 0.25s ease,
+      background 0.25s ease;
+  }
+
+  /* Sits behind the body text in the bottom-right. Accent at very low opacity
+     rather than a new grey, so it stays tied to the palette.
+
+     Fully inside the card, not bleeding past the corner — the clipped version
+     read as a mistake rather than a watermark. */
+  .ghost-num {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.3rem;
+    z-index: 0;
+    /* Plex Sans, not Plex Mono. Mono's dotted zero is its default glyph, not an
+       OpenType alternate — `font-feature-settings: "zero" 0` renders
+       identically, verified side by side — so the only way to lose the dot is a
+       different family. Sans is already loaded, so this costs nothing. */
+    font-family: var(--font-body);
+    font-size: clamp(4.5rem, 16vw, 7rem);
+    font-weight: 500;
+    line-height: 0.82;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    opacity: 0.08;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .card:hover {
+    border-color: var(--faint);
+    background: rgba(29, 32, 36, 0.75);
+  }
+
+  /* Keyboard focus lands on the inner link; lift the ring to the whole card. */
+  .card:focus-within {
+    border-color: var(--accent);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ---- generated visual ---- */
+
+  /* aspect-ratio rather than a fixed height, so the block scales with the card
+     in both the desktop grid and the narrower mobile carousel.
+
+     4/3, not 16/10 — the thumb is inset by the card padding now, which makes it
+     narrower and therefore shorter at a given ratio. The taller ratio brings it
+     back to roughly the same height as the text block underneath. */
+  .shape {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 6px;
+  }
+
+  .shape[data-v="0"] {
+    background:
+      radial-gradient(75% 110% at 15% 95%, #4d7030 0%, transparent 60%),
+      radial-gradient(60% 90% at 85% 5%, #2c3d48 0%, transparent 55%),
+      linear-gradient(155deg, #232830 0%, #15171a 100%);
+  }
+
+  .shape[data-v="1"] {
+    background:
+      radial-gradient(80% 100% at 80% 90%, #33505e 0%, transparent 62%),
+      radial-gradient(70% 80% at 10% 10%, #3a4a2a 0%, transparent 58%),
+      linear-gradient(200deg, #20252b 0%, #15171a 100%);
+  }
+
+  .shape[data-v="2"] {
+    background:
+      radial-gradient(90% 100% at 50% 100%, #3f5526 0%, transparent 58%),
+      radial-gradient(60% 70% at 15% 15%, #262c33 0%, transparent 60%),
+      linear-gradient(170deg, #1c2026 0%, #15171a 100%);
+  }
+
+  .shape[data-v="3"] {
+    background:
+      radial-gradient(70% 95% at 92% 82%, #3d6136 0%, transparent 60%),
+      radial-gradient(75% 85% at 18% 18%, #2a3540 0%, transparent 58%),
+      linear-gradient(135deg, #1e232a 0%, #15171a 100%);
+  }
+
+  /* Grain. Reads properly here because the gradients underneath are mid-tone —
+     over near-black, overlay blending is effectively a no-op. */
+  .shape::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.4;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+
+  /* Name inside the block on hover. Purely a flourish — the same name is always
+     visible as the heading below, so nothing is hidden behind hover. */
+  /* z-index because .shape::after (the grain) is the last child and would
+     otherwise paint over the name. */
+  .ghost {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: clamp(0.9375rem, 3vw, 1.5rem);
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--text);
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    transform: scale(0.96);
+    transition:
+      opacity 0.35s ease,
+      transform 0.45s var(--ease-out),
+      letter-spacing 0.45s var(--ease-out);
+  }
+
+  .card:hover .ghost,
+  .card:focus-within .ghost {
+    opacity: 1;
+    transform: none;
+    letter-spacing: 0.34em;
+  }
+
+
+  /* ---- card body ---- */
+
+  /* Small inline padding only — the text lines up with the thumb's edges.
+     z-index keeps it above the watermark numeral. */
+  .body {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 0.95rem 0.35rem 0.25rem;
+  }
+
+  .meta {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.45rem;
+  }
+
+  .index {
+    color: var(--text);
+  }
+
+  .slash {
+    color: var(--rule);
+    margin: 0 0.4rem;
+  }
+
+  .name {
+    font-size: 1.1875rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .name a {
+    text-decoration: none;
+  }
+
+  /* Whole card is the hit target; the link text stays meaningful to a reader. */
+  .name a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+
+  .card:hover .name {
+    color: var(--accent);
+  }
+
+  .summary {
+    margin: 0.5rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--soft);
+    max-width: 34rem;
+  }
+
+  /* Pills rather than the slash-separated run used on the case-study pages.
+     The global .tags rule adds a " /" after each item — killed here. */
+  .tags {
+    margin-top: auto;
+    padding-top: 1rem;
+    gap: 0.4rem;
+    font-size: 0.625rem;
+    color: var(--accent);
+  }
+
+  .tags li {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    line-height: 1.5;
+  }
+
+  .tags li::after {
+    content: none;
+  }
+</style>

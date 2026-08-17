@@ -1,0 +1,38 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# Astro's generated types and content cache
+.astro/
+
+# Hand-taken snapshots from before git existed. The rule stays so one can be
+# dropped here again without it reaching the repo.
+_backup/
+
+# Originals the shipped images were cropped and resized from. Nothing imports
+# them, so they never reach dist — 2.6MB of binary with no business in a public
+# repo's permanent history. Kept on disk because the shipped files can't be
+# reversed back into them. See design/NOTES.md.
+design/
+
+# Working notes. Deliberately local-only: it contains candid reasoning about
+# named third parties and about positioning, and git history is permanent — this
+# stays out unless publishing it is a decision rather than an accident.
+CLAUDE.md
+
+# environment
+.env
+.env.*
+!.env.example
+
+# logs
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# editors and OS
+.DS_Store
+Thumbs.db
+.idea/

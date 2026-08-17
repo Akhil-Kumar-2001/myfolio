@@ -1,0 +1,144 @@
+---
+import { experience } from "@/data/site";
+---
+
+<section class="band" id="experience">
+  <div class="row">
+    <h2 class="eyebrow">Experience</h2>
+
+    <ol class="track">
+      {
+        experience.map((role, i) => (
+          <li class="role reveal" style={`--i: ${i}`} data-current={role.current || undefined}>
+            <div class="line">
+              <p class="period">{role.period}</p>
+              <p class="place">
+                {role.location}
+                <span class="dot">&middot;</span>
+                <span class="mode">{role.arrangement}</span>
+              </p>
+            </div>
+            <h3 class="title">{role.title}</h3>
+            <p class="company">
+              {role.url ? (
+                <a href={role.url} rel="noopener">
+                  {role.company}
+                </a>
+              ) : (
+                role.company
+              )}
+            </p>
+            <p class="summary">{role.summary}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .track {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .role {
+    position: relative;
+    padding-left: 1.5rem;
+    padding-bottom: 2.5rem;
+  }
+
+  .role:last-child {
+    padding-bottom: 0;
+  }
+
+  /* The spine. Stops at the last marker rather than running past it. */
+  .role::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 0.55rem;
+    bottom: 0;
+    width: 1px;
+    background: var(--rule);
+  }
+
+  .role:last-child::before {
+    display: none;
+  }
+
+  /* The marker. */
+  .role::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.45rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1px solid var(--faint);
+  }
+
+  .role[data-current]::after {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  /* Period left, place right. Wraps to two rows before they ever collide. */
+  .line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.15rem 1.5rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .period,
+  .place {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 0;
+  }
+
+  .place {
+    text-align: right;
+  }
+
+  .dot {
+    color: var(--rule);
+    margin: 0 0.15rem;
+  }
+
+  /* Remote / onsite is the part people scan for. */
+  .mode {
+    color: var(--soft);
+  }
+
+  .title {
+    font-size: 1.125rem;
+    line-height: 1.25;
+  }
+
+  .company {
+    font-family: var(--font-mono);
+    font-size: var(--step-meta);
+    color: var(--accent);
+    margin: 0.25rem 0 0;
+  }
+
+  .company a {
+    text-decoration-color: var(--rule);
+  }
+
+  .summary {
+    margin-top: 0.85rem;
+    color: var(--soft);
+    font-size: 0.9375rem;
+  }
+</style>

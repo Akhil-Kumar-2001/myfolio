@@ -1,0 +1,376 @@
+---
+import { Image } from "astro:assets";
+import Base from "@/layouts/Base.astro";
+import notFound from "@/assets/not-found-art.png";
+import { site } from "@/data/site";
+---
+
+<Base
+  title={`Page not found — ${site.name}`}
+  description="That page doesn't exist. Head back to the homepage or look through the work."
+  noindex
+>
+  <section class="band band-open nf">
+    {/* Decorative, so the alt is empty and the layer is aria-hidden — the copy
+        says everything. It sits behind the text on both breakpoints rather than
+        beside it: boxed alongside, the artwork's near-black background reads as
+        a rectangle pasted onto the page, and stacked under the copy on a phone
+        it turns a 404 into something you have to scroll.
+
+        not-found-art.png is the artwork half of the reference mockup in
+        not-found.png; the other half is this page's text, which is real HTML
+        here rather than baked into a picture. */}
+    <div class="nf-art" aria-hidden="true">
+      <Image
+        src={notFound}
+        alt=""
+        widths={[480, 700, 906]}
+        sizes="(min-width: 56rem) 58vw, 100vw"
+        quality={72}
+        loading="eager"
+      />
+    </div>
+
+    <div class="nf-copy">
+      <p class="err">
+        Error<span class="caret" aria-hidden="true"></span>
+      </p>
+
+      <p class="code">404</p>
+
+      {/* The sentence is the h1, not the numeral — a heading of "404" tells a
+          screen reader nothing. */}
+      <h1 class="head">
+        Looks like you&rsquo;ve taken <span class="hit">a wrong turn.</span>
+      </h1>
+
+      <p class="say">
+        The page you&rsquo;re looking for doesn&rsquo;t exist or has been moved to
+        another pipeline.
+      </p>
+
+      <div class="actions">
+        <a class="btn" href="/">
+          <span class="prompt" aria-hidden="true">&gt;_</span>
+          Back to home
+        </a>
+        <a class="more" href="/#work">
+          Explore work<span class="arrow" aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
+
+      <p class="note">Return to the pipeline.</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Fills the screen like the hero does, for the same reason: there's nothing
+     below it worth peeking at. */
+  .nf {
+    display: grid;
+    align-content: center;
+    min-height: 100svh;
+    padding-block: 6rem 3rem;
+  }
+
+  .nf-copy {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---- the artwork layer ---- */
+
+  /* Full-bleed: .nf sits inside the 58rem shell, so the layer breaks out to the
+     viewport edge. Safe against 100vw's scrollbar overflow because body carries
+     overflow-x: clip. */
+  .nf-art {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  /* Phone: the art is the background, sat on the floor of the screen.
+
+     Not `inset: 0` with object-fit: cover — the artwork is landscape (1.16)
+     and a phone viewport is portrait (0.45), so covering it crops away about
+     60% of the width and you get a magnified fragment. Sizing the box to the
+     artwork's own ratio instead (156% of viewport wide by 62% tall ≈ 1.13)
+     keeps the astronaut whole, and the overhang past both edges pushes the
+     HUD panel partly off-screen so its small type stops competing with the
+     body copy. */
+  /* Full width, natural height — so the whole artwork is on screen, uncropped.
+     Any object-fit at all was the mistake here: cover has to throw away
+     whichever axis doesn't match, and the leftover edge inside the viewport is
+     what read as a pasted-on margin. At 100% width the left and right edges
+     land on the screen edges, where an edge is invisible, and only the top
+     needs dissolving. */
+  .nf-art img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: auto;
+    /* A linear fade, not a radial one: the radial's ellipse still had ~36%
+       alpha where it crossed the top edge, and that residue was the hard line
+       across the artwork. This reaches zero at the edge by construction. */
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 24%);
+    mask-image: linear-gradient(180deg, transparent 0%, #000 24%);
+  }
+
+  /* Reading scrim. Heaviest over the copy, clearing toward the floor so the
+     astronaut still reads where the text has run out. */
+  .nf-art::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgb(21 23 26 / 0.9) 0%,
+      rgb(21 23 26 / 0.78) 42%,
+      rgb(21 23 26 / 0.34) 60%,
+      rgb(21 23 26 / 0.06) 76%,
+      rgb(21 23 26 / 0) 88%
+    );
+  }
+
+  @media (min-width: 56rem) {
+    /* Laptop: art to the right of the copy, but bled off the viewport edge and
+       faded on every side instead of framed. The left stop is the important
+       one — it dissolves the art before it reaches the text. */
+    .nf-art img {
+      inset: 50% 0 auto auto;
+      left: auto;
+      width: min(58vw, 940px);
+      height: min(82vh, 720px);
+      transform: translateY(-50%);
+      object-fit: cover;
+      object-position: 50% 50%;
+      opacity: 0.9;
+      /* The ellipse has to be *inscribed* in the box, or it never reaches zero
+         where it crosses an edge and the leftover alpha draws a straight line.
+         Radius must equal the distance from the centre to each edge that sits
+         inside the viewport: 55% across with the centre at 55% puts the left
+         edge exactly on the boundary, 50%/50% does the same top and bottom.
+         The right edge is pinned to the viewport edge, so it needs nothing.
+
+         Corners were always fine — they're further than the radius by the
+         diagonal — which is why sampling only corners said this was blending
+         when the edge midpoints were still at 21-31% alpha.
+
+         Solid to 45% then a fast fade, rather than fading the whole way from
+         the centre, so the astronaut keeps his brightness and only the last
+         stretch before each edge does the dissolving. */
+      -webkit-mask-image: radial-gradient(
+        55% 50% at 55% 50%,
+        #000 45%,
+        transparent 100%
+      );
+      mask-image: radial-gradient(
+        55% 50% at 55% 50%,
+        #000 45%,
+        transparent 100%
+      );
+    }
+
+    /* No vertical scrim on desktop — the copy has its own column, and now that
+       the mask dies at the art's left edge the two barely meet. Just a light
+       wash for the overlap. */
+    .nf-art::after {
+      background: linear-gradient(
+        90deg,
+        rgb(21 23 26 / 0.55) 0%,
+        rgb(21 23 26 / 0.18) 24%,
+        rgb(21 23 26 / 0) 42%
+      );
+    }
+
+    .nf-copy {
+      max-width: 32rem;
+    }
+  }
+
+  /* ---- copy ---- */
+
+  .err {
+    font-family: var(--font-mono);
+    font-size: var(--step-meta);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 0;
+  }
+
+  .caret {
+    display: inline-block;
+    width: 0.6em;
+    height: 1px;
+    margin-left: 0.7em;
+    vertical-align: 0.15em;
+    background: var(--accent);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .caret {
+      animation: nf-blink 1.2s steps(1, end) infinite;
+    }
+  }
+
+  @keyframes nf-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  /* Plex Sans, not Plex Mono — mono's zero carries a dot in the middle and
+     "404" is mostly zero. Scanlines come from the repeating gradient clipped
+     to the glyphs. */
+  .code {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: clamp(5rem, 19vw, 11.5rem);
+    line-height: 0.82;
+    letter-spacing: -0.045em;
+    margin: 0.5rem 0 1.5rem;
+    background-image:
+      repeating-linear-gradient(
+        to bottom,
+        rgba(134, 169, 78, 0.95) 0 2px,
+        rgba(134, 169, 78, 0.3) 2px 4px
+      ),
+      linear-gradient(180deg, #a3c569 0%, #37501f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    user-select: none;
+  }
+
+  .head {
+    font-family: var(--font-mono);
+    font-size: clamp(1.25rem, 3.4vw, 1.75rem);
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    max-width: 22ch;
+  }
+
+  .hit {
+    color: var(--accent);
+  }
+
+  .say {
+    margin-top: 1.1rem;
+    color: var(--soft);
+    max-width: 32ch;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.75rem;
+    margin-top: 2rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 44px;
+    padding-inline: 1.15rem;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+    /* The art sits behind these, so they need their own ground. */
+    background: rgb(21 23 26 / 0.55);
+    backdrop-filter: blur(2px);
+    transition:
+      background 0.22s ease,
+      color 0.22s ease;
+  }
+
+  .btn:hover {
+    background: rgba(134, 169, 78, 0.14);
+  }
+
+  .prompt {
+    color: var(--accent);
+    opacity: 0.7;
+  }
+
+  .more {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--faint);
+    text-decoration: none;
+    transition: color 0.22s ease;
+  }
+
+  .more:hover {
+    color: var(--accent);
+  }
+
+  .arrow {
+    display: inline-block;
+    margin-left: 0.5rem;
+    transition: transform 0.25s var(--ease-out);
+  }
+
+  .more:hover .arrow {
+    transform: translateX(0.3rem);
+  }
+
+  .note {
+    margin-top: 2.5rem;
+    padding-left: 0.8rem;
+    border-left: 2px solid var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--faint);
+  }
+
+  /* Tighter on a phone — every pixel the copy gives back is floor the
+     astronaut gets to stand on without the two overlapping. Top-aligned rather
+     than centred for the same reason: centring splits the free space above and
+     below the copy, and the space below is the half the art needs. */
+  @media (max-width: 55.99rem) {
+    .nf {
+      align-content: start;
+      padding-block: 7rem 0;
+    }
+
+    .actions {
+      margin-top: 1.75rem;
+    }
+
+    .note {
+      margin-top: 1.75rem;
+    }
+  }
+
+  /* Short phones run out of column before the art has anywhere to go, and
+     "Return to the pipeline." ends up sitting on the astronaut's helmet. Lift
+     the copy so the two clear each other. */
+  @media (max-width: 55.99rem) and (max-height: 800px) {
+    .nf {
+      padding-block: 5.5rem 0;
+    }
+  }
+</style>

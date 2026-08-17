@@ -1,0 +1,12 @@
+---
+import { site } from "@/data/site";
+---
+
+<section class="band" id="about">
+  <div class="row">
+    <h2 class="eyebrow">About</h2>
+    <div class="reveal">
+      {site.about.map((para) => <p>{para}</p>)}
+    </div>
+  </div>
+</section>

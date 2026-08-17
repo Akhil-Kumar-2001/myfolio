@@ -1,0 +1,189 @@
+---
+import { site, experience } from "@/data/site";
+
+const role = experience.find((r) => r.current);
+---
+
+<section class="band band-open hero">
+  <div class="row hero-row">
+    <div class="hero-body">
+      <h1 class="greeting rise" style="--i: 0">
+        <span class="hey">Hey, I&rsquo;m</span>{" "}
+        <span class="who" transition:name="site-name">{site.shortName}</span>
+      </h1>
+
+      {/* Static, and deliberately the same title as <title> and the JSON-LD.
+          Three different titles in three places is worse than one. */}
+      <p class="role rise" style="--i: 1">{site.role}</p>
+
+      <p class="sub rise" style="--i: 2">{site.lede}</p>
+
+      <p class="now rise" style="--i: 3">
+        <span class="now-key">Currently:</span> {site.now}
+        {
+          role &&
+            (role.url ? (
+              <a href={role.url} rel="noopener">
+                @ {role.company}
+              </a>
+            ) : (
+              <span>@ {role.company}</span>
+            ))
+        }
+      </p>
+    </div>
+  </div>
+
+  {/* A real link, not decoration — it gives keyboard users a jump past the
+      hero, and Lenis handles the smooth scroll to it. */}
+  <a class="cue" href="#about">
+    <span class="cue-label">Scroll</span>
+    <span class="cue-line" aria-hidden="true"></span>
+  </a>
+</section>
+
+<style>
+  /* The hero owns the first screen on its own — nothing below it should be
+     visible until you scroll.
+
+     svh, not vh: on mobile, vh is the *large* viewport (URL bar hidden), so
+     100vh overflows by the height of the browser chrome and lets the next
+     section peek in. svh is the small viewport, which is exactly what's on
+     screen at load. min-height, not height, so a short landscape screen can
+     still grow rather than clipping the text.
+
+     Two rows rather than absolute positioning for the foot: on a short screen
+     the cue and terminal are pushed down by content instead of sitting on it. */
+  .hero {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    min-height: 100vh; /* fallback for browsers without svh */
+    min-height: 100svh;
+    padding-block: 5rem 2rem;
+  }
+
+  .hero-row {
+    align-self: center;
+  }
+
+  @media (min-width: 56rem) {
+    .hero {
+      padding-block: 6rem 2.5rem;
+    }
+
+    /* No rail content here, but the prose stays on the site's spine. */
+    .hero-body {
+      grid-column: 2;
+    }
+  }
+
+  .greeting {
+    font-size: var(--step-greeting);
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    font-variation-settings: "SOFT" 32, "WONK" 1;
+  }
+
+  /* The greeting recedes so the name still carries the weight. */
+  .hey {
+    color: var(--soft);
+  }
+
+  .who {
+    color: var(--text);
+  }
+
+  .role {
+    font-family: var(--font-mono);
+    font-size: var(--step-meta);
+    letter-spacing: 0.1em;
+    text-transform: lowercase;
+    color: var(--accent);
+    margin-top: 0.9rem;
+  }
+
+  .sub {
+    font-size: var(--step-sub);
+    line-height: 1.5;
+    color: var(--soft);
+    margin-top: 1.5rem;
+    max-width: 34rem;
+  }
+
+  .now {
+    font-family: var(--font-mono);
+    font-size: var(--step-meta);
+    color: var(--soft);
+    margin-top: 1.5rem;
+  }
+
+  .now-key {
+    color: var(--faint);
+  }
+
+  .now a {
+    color: var(--accent);
+    text-decoration-color: var(--rule);
+  }
+
+  /* ---- scroll cue ---- */
+
+  /* Bottom-right of the hero, on the right edge of the readable column. */
+  .cue {
+    justify-self: end;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    padding-top: 2rem;
+    text-decoration: none;
+    color: var(--faint);
+    transition: color 0.25s ease;
+  }
+
+  .cue:hover {
+    color: var(--accent);
+  }
+
+  .cue-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .cue-line {
+    position: relative;
+    width: 1px;
+    height: 2.75rem;
+    overflow: hidden;
+    background: var(--rule);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cue-line::after {
+      content: "";
+      position: absolute;
+      inset-inline: 0;
+      height: 45%;
+      background: linear-gradient(var(--accent), transparent);
+      animation: cue-travel 2.4s ease-in-out infinite;
+    }
+  }
+
+  @keyframes cue-travel {
+    from {
+      transform: translateY(-100%);
+    }
+    to {
+      transform: translateY(250%);
+    }
+  }
+
+  /* Nothing below the fold to hint at when the hero already overflows. */
+  @media (max-height: 34rem) {
+    .cue {
+      display: none;
+    }
+  }
+</style>

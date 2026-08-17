@@ -1,0 +1,116 @@
+---
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import Base from "@/layouts/Base.astro";
+import { site } from "@/data/site";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("work", ({ data }) => data.published);
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+type Props = { entry: CollectionEntry<"work"> };
+
+const { entry } = Astro.props as Props;
+const { Content } = await render(entry);
+const d = entry.data;
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "CreativeWork",
+  name: d.name,
+  abstract: d.problem,
+  dateCreated: d.year,
+  author: { "@type": "Person", name: site.name, url: site.url },
+  keywords: d.stack.join(", "),
+};
+---
+
+<Base title={`${d.name} — ${site.name}`} description={d.problem} schema={schema}>
+  <article class="band band-open">
+    <div class="row">
+      <p class="rail">{d.year}<br />{d.role}</p>
+
+      <div>
+        <p class="meta">{d.name}</p>
+        <h1 class="problem">{d.problem}</h1>
+        <p class="outcome">{d.outcome}</p>
+
+        <ul class="tags">
+          {d.stack.map((s) => <li>{s}</li>)}
+        </ul>
+
+        <ul class="links">
+          {
+            d.links.map((l) => (
+              <li>
+                <a href={l.url} rel="noopener" data-store={l.store || undefined}>
+                  {l.label}
+                </a>
+              </li>
+            ))
+          }
+          <li><a href="/#work">All work</a></li>
+        </ul>
+
+        <div class="prose"><Content /></div>
+      </div>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .meta {
+    font-family: var(--font-mono);
+    font-size: var(--step-meta);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.75rem;
+  }
+
+  .problem {
+    font-size: var(--step-problem);
+    max-width: 30rem;
+  }
+
+  .outcome {
+    margin-top: 1.5rem;
+    color: var(--soft);
+  }
+
+  .prose {
+    margin-top: 3.5rem;
+    color: var(--soft);
+  }
+
+  .prose :global(h2) {
+    font-size: 1.25rem;
+    color: var(--text);
+    margin: 2.5rem 0 0.75rem;
+  }
+
+  .prose :global(h2:first-child) {
+    margin-top: 0;
+  }
+
+  .prose :global(strong) {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .prose :global(pre) {
+    background: var(--raised);
+    padding: 1rem;
+    overflow-x: auto;
+    font-size: 0.8125rem;
+    max-width: var(--measure);
+  }
+
+  .prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+  }
+</style>

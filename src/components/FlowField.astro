@@ -1,0 +1,356 @@
+---
+/**
+ * Page backdrop — a fixed full-viewport quad running a layered, domain-warped
+ * fBm field.
+ *
+ * Three depth planes move by different amounts against scroll and cursor. That
+ * parallax is what makes it read as dimensional; a single flat noise layer
+ * never does.
+ *
+ * Three is dynamically imported after first paint so its weight stays out of
+ * the critical path. The CSS gradient is what renders immediately and is also
+ * the permanent fallback when WebGL is unavailable.
+ *
+ * transition:persist keeps the canvas and its GL context alive across view
+ * transitions, so the field never restarts mid-navigation.
+ */
+---
+
+<div class="backdrop" data-field aria-hidden="true" transition:persist="backdrop">
+  <canvas data-field-canvas></canvas>
+</div>
+
+<style>
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0; /* Content sits at z-index 1. See global.css. */
+    pointer-events: none;
+    overflow: hidden;
+    /* Flat, deliberately. This is what paints before three finishes loading,
+       and a coloured gradient there read as a flash of something else before
+       the shader arrived. Also the permanent no-WebGL fallback, so browsers
+       without it get plain charcoal rather than a stand-in. */
+    background: var(--bg);
+  }
+
+  canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1.6s ease;
+  }
+
+  .backdrop[data-ready] canvas {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    canvas {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  import type { Mesh, ShaderMaterial, WebGLRenderer } from "three";
+
+  const VERT = `
+    void main() {
+      gl_Position = vec4(position.xy, 0.0, 1.0);
+    }
+  `;
+
+  const FRAG = `
+    precision highp float;
+
+    uniform float uTime;
+    uniform vec2  uRes;
+    uniform vec2  uPointer;
+    uniform float uScroll;
+
+    // Palette lifted from global.css so the canvas and the page agree.
+    const vec3 BG   = vec3(0.082, 0.090, 0.102); // #15171a
+    const vec3 MOSS = vec3(0.525, 0.663, 0.306); // #86a94e
+    const vec3 BONE = vec3(0.851, 0.796, 0.639); // #d9cba3
+    const vec3 COLD = vec3(0.255, 0.365, 0.435); // cool steel, for the far plane
+
+    vec2 hash2(vec2 p) {
+      p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+      return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+    }
+
+    float noise(vec2 p) {
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      vec2 u = f * f * (3.0 - 2.0 * f);
+      return mix(
+        mix(dot(hash2(i + vec2(0.0, 0.0)), f - vec2(0.0, 0.0)),
+            dot(hash2(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
+        mix(dot(hash2(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)),
+            dot(hash2(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)), u.x),
+        u.y
+      );
+    }
+
+    float fbm(vec2 p) {
+      float v = 0.0;
+      float a = 0.5;
+      for (int i = 0; i < 4; i++) {
+        v += a * noise(p);
+        p = p * 2.03 + 17.1;
+        a *= 0.5;
+      }
+      return v;
+    }
+
+    // Ridged fBm. Plain fBm clusters hard around its midpoint, which reads as
+    // formless haze; creasing at the zero crossings gives filaments you can
+    // actually see, which is what makes this look like an aurora and not fog.
+    float ridged(vec2 p) {
+      float v = 0.0;
+      float a = 0.5;
+      for (int i = 0; i < 4; i++) {
+        v += a * (1.0 - abs(noise(p)) * 2.0);
+        p = p * 2.03 + 17.1;
+        a *= 0.5;
+      }
+      return v;
+    }
+
+    mat2 rot(float a) {
+      float c = cos(a);
+      float s = sin(a);
+      return mat2(c, -s, s, c);
+    }
+
+    // Domain-warped ridged noise. The warp is what turns it into something that
+    // folds and drifts rather than just shimmering in place.
+    float layer(vec2 p, float t, float seed) {
+      vec2 q = vec2(
+        fbm(p + seed),
+        fbm(p + vec2(3.1, 7.7) - seed)
+      );
+      return ridged(p * 1.4 + 2.2 * q + vec2(t, -t * 0.6));
+    }
+
+    void main() {
+      vec2 uv = gl_FragCoord.xy / uRes;
+      float s = min(uRes.x, uRes.y);
+      vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / s;
+      vec2 ptr = (uPointer - 0.5 * uRes) / s;
+
+      float t = uTime * 0.07;
+      vec3 col = BG;
+
+      for (int i = 0; i < 3; i++) {
+        float fi = float(i);
+        float depth = 1.0 - fi * 0.35;              // 1.00 near .. 0.30 far
+        float scale = mix(1.2, 3.6, fi * 0.5);      // near = broad features
+
+        // Near planes travel further. This is the whole 3D illusion.
+        vec2 off = ptr * 0.18 * depth + vec2(0.0, uScroll * 0.8 * depth);
+        vec2 pp = rot(fi * 0.7 + t * 0.02) * (p * scale) + off;
+
+        float v = layer(pp, t * (0.55 + 0.55 * depth), fi * 11.3);
+
+        // Selective: bright along the ridge lines, dark between them. A wider
+        // range plus any constant ambient term turns this into a flat wash that
+        // reads as green stone and swallows the type.
+        float wisp = pow(smoothstep(0.55, 0.95, v), 2.0);
+
+        vec3 tint = mix(COLD, MOSS, depth);
+        col += tint * wisp * (0.13 * depth);
+        col += BONE * pow(wisp, 4.0) * (0.05 * depth);
+      }
+
+      // Calm the middle so the content column keeps its contrast, and let the
+      // field bloom left and right instead. Doubles as framing for the text.
+      //
+      // Deliberately the ONLY mask here. A radial vignette on top of this
+      // cancels the edge bloom out and flattens the whole field to nothing.
+      // Kept tight (3.2) so it protects the text column and not half the screen.
+      float trough = 1.0 - 0.42 * exp(-pow((uv.x - 0.5) * 3.2, 2.0));
+      col = BG + (col - BG) * trough;
+
+      // Film grain, plus enough dither to stop flat darks banding on 8-bit.
+      float g = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+      col += (g - 0.5) * 0.016;
+
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  let teardown: (() => void) | null = null;
+  let mounted: HTMLCanvasElement | null = null;
+
+  async function start(host: HTMLElement, canvas: HTMLCanvasElement) {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const small = window.innerWidth < 700;
+
+    let THREE: typeof import("three");
+    try {
+      THREE = await import("three");
+    } catch {
+      return; // Gradient fallback stays put.
+    }
+
+    let renderer: WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: false,
+        alpha: false,
+        powerPreference: "low-power",
+      });
+    } catch {
+      return; // No WebGL context — same fallback.
+    }
+
+    // Soft smoke, so we can render well under 1:1 and let CSS scale it up.
+    // Full-viewport coverage makes this the difference between warm and cool.
+    const scale = small ? 0.45 : 0.58;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5) * scale);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    const material: ShaderMaterial = new THREE.ShaderMaterial({
+      vertexShader: VERT,
+      fragmentShader: FRAG,
+      depthTest: false,
+      depthWrite: false,
+      uniforms: {
+        uTime: { value: 0 },
+        uRes: { value: new THREE.Vector2(1, 1) },
+        uPointer: { value: new THREE.Vector2(0, 0) },
+        uScroll: { value: 0 },
+      },
+    });
+
+    const mesh: Mesh = new THREE.Mesh(geometry, material);
+    mesh.frustumCulled = false; // We bypass the matrices in the vertex shader.
+    scene.add(mesh);
+
+    const buffer = new THREE.Vector2();
+    const pointer = new THREE.Vector2(0, 0);
+    const pointerTarget = new THREE.Vector2(0, 0);
+
+    function resize() {
+      const w = host.clientWidth;
+      const h = host.clientHeight;
+      if (!w || !h) return;
+      renderer.setSize(w, h, false); // false — CSS owns the display size.
+      renderer.getDrawingBufferSize(buffer);
+      material.uniforms.uRes.value.copy(buffer);
+      pointer.set(buffer.x * 0.5, buffer.y * 0.5);
+      pointerTarget.copy(pointer);
+    }
+
+    resize();
+
+    let frame = 0;
+    let running = false;
+    let elapsed = 0;
+    let last = performance.now();
+    let scrollSmooth = 0;
+
+    // Slow motion, so a lower cap is free quality on battery.
+    const minFrame = small ? 1 / 30 : 1 / 48;
+    let acc = 0;
+
+    function draw(now: number) {
+      frame = requestAnimationFrame(draw);
+      const dt = Math.min((now - last) / 1000, 1 / 15); // Clamp after a stall.
+      last = now;
+      acc += dt;
+      if (acc < minFrame) return;
+      elapsed += acc;
+      acc = 0;
+
+      // Scroll in viewport units, eased so the parallax never snaps.
+      const target = window.scrollY / Math.max(window.innerHeight, 1);
+      scrollSmooth += (target - scrollSmooth) * 0.08;
+
+      pointer.lerp(pointerTarget, 0.05);
+      material.uniforms.uPointer.value.copy(pointer);
+      material.uniforms.uScroll.value = scrollSmooth;
+      material.uniforms.uTime.value = elapsed;
+      renderer.render(scene, camera);
+    }
+
+    function play() {
+      if (running || reduce) return;
+      running = true;
+      last = performance.now();
+      frame = requestAnimationFrame(draw);
+    }
+
+    function pause() {
+      running = false;
+      cancelAnimationFrame(frame);
+    }
+
+    // Reduced motion gets one composed frame, never a loop.
+    renderer.render(scene, camera);
+    host.dataset.ready = "";
+    if (!reduce) play();
+
+    const onVisibility = () => (document.hidden ? pause() : play());
+    document.addEventListener("visibilitychange", onVisibility);
+
+    const ro = new ResizeObserver(() => {
+      resize();
+      if (reduce) renderer.render(scene, camera);
+    });
+    ro.observe(host);
+
+    const fine = window.matchMedia("(pointer: fine)").matches;
+    const onPointerMove = (e: PointerEvent) => {
+      const ratio = renderer.getPixelRatio();
+      pointerTarget.set(
+        e.clientX * ratio,
+        (window.innerHeight - e.clientY) * ratio, // gl_FragCoord counts up.
+      );
+    };
+    if (fine && !reduce) {
+      window.addEventListener("pointermove", onPointerMove, { passive: true });
+    }
+
+    teardown = () => {
+      pause();
+      ro.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pointermove", onPointerMove);
+      geometry.dispose();
+      material.dispose();
+      renderer.dispose();
+      renderer.forceContextLoss(); // Browsers cap live GL contexts — free it.
+      teardown = null;
+      mounted = null;
+    };
+  }
+
+  function boot() {
+    const host = document.querySelector<HTMLElement>("[data-field]");
+    const canvas = document.querySelector<HTMLCanvasElement>("[data-field-canvas]");
+    if (!host || !canvas) return;
+
+    // transition:persist means this is usually the same node we already own.
+    if (mounted === canvas) return;
+    teardown?.();
+    mounted = canvas;
+
+    // Yield past first paint so the import never competes with content.
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(() => void start(host, canvas), { timeout: 1200 });
+    } else {
+      setTimeout(() => void start(host, canvas), 200);
+    }
+  }
+
+  document.addEventListener("astro:page-load", boot);
+</script>

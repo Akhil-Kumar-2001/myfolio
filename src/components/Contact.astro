@@ -1,0 +1,102 @@
+---
+import { site } from "@/data/site";
+
+/** The scheme and www. add nothing once the URL is the visible label. */
+const bare = (url: string) =>
+  url.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/+$/, "");
+
+const rows = [
+  { label: "Email", text: site.email, href: `mailto:${site.email}`, rel: undefined },
+  { label: "GitHub", text: bare(site.github), href: site.github, rel: "me noopener" },
+  { label: "LinkedIn", text: bare(site.linkedin), href: site.linkedin, rel: "me noopener" },
+  // The CV is a long Drive URL — showing it bare would be unreadable.
+  { label: "CV", text: "Download CV ↓", href: site.cv, rel: "noopener" },
+];
+---
+
+<section class="band" id="contact">
+  <div class="row">
+    <h2 class="eyebrow">Contact</h2>
+    <div class="reveal">
+      <dl class="rows">
+        {
+          rows.map((r) => (
+            <div class="entry">
+              <dt>{r.label}</dt>
+              <dd>
+                <a href={r.href} rel={r.rel}>
+                  {r.text}
+                </a>
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
+
+      {/* Moved out of the hero — more use to someone about to email him. */}
+      <p class="where">{site.location}</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .rows {
+    margin: 0;
+    border-top: 1px solid var(--rule);
+    max-width: var(--measure);
+  }
+
+  .entry {
+    display: grid;
+    /* Label above value on narrow screens — the LinkedIn URL is too long to
+       sit beside a label at 375px without overflowing. */
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    padding-block: 0.35rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  @media (min-width: 34rem) {
+    .entry {
+      grid-template-columns: 6.5rem minmax(0, 1fr);
+      gap: 0 1.5rem;
+      padding-block: 0;
+    }
+  }
+
+  dt {
+    font-family: var(--font-mono);
+    font-size: var(--step-meta);
+    letter-spacing: 0.04em;
+    color: var(--faint);
+  }
+
+  dd {
+    margin: 0;
+    min-width: 0;
+  }
+
+  dd a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px; /* tap target */
+    font-family: var(--font-mono);
+    font-size: var(--step-meta);
+    letter-spacing: 0.02em;
+    color: var(--text);
+    text-decoration-color: var(--rule);
+    overflow-wrap: anywhere;
+  }
+
+  dd a:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+
+  .where {
+    font-family: var(--font-mono);
+    font-size: var(--step-meta);
+    color: var(--faint);
+    margin-top: 1.75rem;
+  }
+</style>

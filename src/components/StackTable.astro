@@ -1,0 +1,121 @@
+---
+import { stack } from "@/data/site";
+---
+
+<section class="band" id="stack">
+  <div class="row">
+    <h2 class="eyebrow">Stack</h2>
+
+    <div class="groups">
+      {
+        stack.map((group, i) => (
+          <div class="group reveal" style={`--i: ${i}`}>
+            <h3 class="group-name">{group.group}</h3>
+            <table>
+              <caption class="sr-only">
+                {group.group} skills, with how well I know each one
+              </caption>
+              <tbody>
+                {group.skills.map((skill) => (
+                  <tr>
+                    <th scope="row">{skill.name}</th>
+                    <td>
+                      <span data-bucket={skill.bucket}>{skill.bucket}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Groups sit side by side rather than stacking into one long column.
+     Multi-column rather than grid: the groups have very different row counts,
+     and a 2-col grid stretches each row to its tallest cell, leaving a hole
+     under the short one. Columns flow and balance instead. */
+  .groups {
+    columns: 1;
+  }
+
+  @media (min-width: 34rem) {
+    .groups {
+      columns: 2;
+      column-gap: 2.5rem;
+    }
+  }
+
+  .group {
+    break-inside: avoid;
+    margin-bottom: 1.75rem;
+  }
+
+  .group:last-child {
+    margin-bottom: 0;
+  }
+
+  .group-name {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 400;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.28rem 0 0.28rem 0;
+    font-weight: 400;
+    vertical-align: baseline;
+  }
+
+  th {
+    color: var(--text);
+    padding-right: 0.5rem;
+  }
+
+  td {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  td span {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+    color: var(--faint);
+  }
+
+  /* Only "daily" gets emphasis. If everything is highlighted, nothing is. */
+  td span[data-bucket="daily"] {
+    color: var(--accent);
+  }
+
+  td span[data-bucket="learning"] {
+    font-style: italic;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>
