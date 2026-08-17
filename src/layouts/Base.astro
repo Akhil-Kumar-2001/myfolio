@@ -47,10 +47,19 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
+    {/* Dimensions declared because several scrapers — LinkedIn and WhatsApp
+        notably — will render a preview from the tags before they finish
+        downloading the image, and without these they either lay out the card
+        wrong or drop the image. 1200x630 is the 1.91:1 that Open Graph wants. */}
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content={`${site.name} — ${site.role}`} />
     <meta property="og:site_name" content={site.name} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={`${site.name} — ${site.role}`} />
 
     {/* These live in public/ and are served verbatim — they are NOT run through
         Astro's image pipeline, because a <link rel="icon"> needs a stable path

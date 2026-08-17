@@ -173,7 +173,10 @@ There is a comment saying so in the fragment shader.
 - Canonical URL per page, from `site` in `astro.config.mjs`. The 404 deliberately
   has none, and carries `noindex, follow` instead
 - Per-page title and description
-- Open Graph and Twitter cards
+- Open Graph and Twitter cards, with `public/og-image.png` at 1200×630 and its
+  dimensions declared in the tags. The card is rendered from `og.html`-style
+  markup in the site's own Fraunces and IBM Plex rather than drawn by hand, so it
+  can be regenerated if the name, role or palette change
 - `Person` JSON-LD on the homepage, `CreativeWork` on each case study
 - `sitemap-index.xml` generated at build; the 404 is excluded
 - `robots.txt` generated at `src/pages/robots.txt.ts`
@@ -181,8 +184,6 @@ There is a comment saying so in the fragment shader.
 
 ## Open
 
-- [ ] `public/og-image.png` at 1200×630. Referenced by the OG tags and currently
-      404s, so link previews have no image
 - [ ] **Host the CV locally.** `site.cv` points at Google Drive, which can prompt
       for sign-in, breaks if permissions change, and sends people off-domain. Put
       the PDF at `public/cv.pdf` and set `cv: "/cv.pdf"`
