@@ -103,6 +103,7 @@ const entries = (await getCollection("work", ({ data }) => data.published)).sort
     .card {
       flex: 0 0 100%;
       scroll-snap-align: center;
+      scroll-snap-stop: always;
       /* The reveal animation is view()-driven and misfires inside a
          horizontally scrolled container. */
       animation: none;
