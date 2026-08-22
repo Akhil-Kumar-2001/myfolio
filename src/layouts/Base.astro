@@ -65,15 +65,18 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
         Astro's image pipeline, because a <link rel="icon"> needs a stable path
         and astro:assets would give it a hashed one.
 
-        Resized from design/fav.png (1213x1213), which is gitignored and local
-        only: 513KB is far too heavy to ship for something drawn at 16 CSS
-        pixels. design/NOTES.md has the sharp commands to regenerate them.
+        Cropped and resized from design/fav-icon.png (1254x1254), which is
+        gitignored and local only: 650KB is far too heavy to ship for something
+        drawn at 16 CSS pixels. design/NOTES.md has the sharp commands.
 
-        48 as well as 32 because Chrome reaches for it in the bookmark and
-        history lists. 180 is the iOS home-screen icon and is the only one
-        flattened onto --bg, since iOS composites a transparent
-        apple-touch-icon onto white and would frame the dark badge in a bright
-        square. */}
+        The badge is a rounded square, so 32 and 48 carry the rounded shape with
+        the corners masked to transparency. 48 as well as 32 because Chrome
+        reaches for it in the bookmark and history lists.
+
+        180 is deliberately the odd one out: square, opaque, NOT rounded. iOS
+        applies its own squircle mask to an apple-touch-icon, so a pre-rounded
+        transparent icon gets clipped twice and looks wrong. It is flattened onto
+        black, which is the badge's own background rather than --bg. */}
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48" />
     <link rel="apple-touch-icon" href="/favicon-180.png" />
