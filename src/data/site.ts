@@ -90,7 +90,13 @@ export const experience: Role[] = [
   },
 ];
 
-export type Bucket = "daily" | "comfortable" | "shipped with" | "learning";
+export type Bucket =
+  | "daily"
+  | "comfortable"
+  | "shipped with"
+  | "shipped with Elevio"
+  | "shipped with RideSense"
+  | "learning";
 
 export type Skill = { name: string; bucket: Bucket };
 
@@ -103,9 +109,9 @@ export const stack: { group: string; skills: Skill[] }[] = [
       { name: "TypeScript", bucket: "daily" },
       { name: "REST API design", bucket: "daily" },
       { name: "JWT auth", bucket: "daily" },
-      { name: "Socket.IO", bucket: "shipped with" },
-      { name: "WebRTC", bucket: "shipped with" },
-      { name: "NestJS", bucket: "shipped with" },
+      { name: "Socket.IO", bucket: "shipped with Elevio" },
+      { name: "WebRTC", bucket: "shipped with Elevio" },
+      { name: "NestJS", bucket: "daily" },
     ],
   },
   {
@@ -132,12 +138,12 @@ export const stack: { group: string; skills: Skill[] }[] = [
   {
     group: "frontend",
     skills: [
-      { name: "React", bucket: "comfortable" },
-      { name: "Next.js", bucket: "comfortable" },
-      { name: "Redux / Zustand", bucket: "comfortable" },
-      { name: "CSS", bucket: "comfortable" },
-      { name: "Astro", bucket: "shipped with" },
-      { name: "Mapbox", bucket: "shipped with" },
+      { name: "React", bucket: "daily" },
+      { name: "Next.js", bucket: "daily" },
+      { name: "Redux / Zustand", bucket: "daily" },
+      { name: "CSS", bucket: "daily" },
+      { name: "Astro", bucket: "shipped with RideSense" },
+      { name: "Mapbox", bucket: "shipped with RideSense" },
     ],
   },
 ];
