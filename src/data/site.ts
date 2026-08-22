@@ -35,9 +35,10 @@ export const site = {
     "Software engineer at RideSense. Backend, infrastructure and frontend — Node, Postgres, AWS, React. Based in Kollam, Kerala.",
 
   about: [
-    "I'm a full stack developer, working as a software engineer at RideSense, where we build an app for motorcyclists. Most of my time goes on the API layer, the AWS setup, and the deployment pipeline, and I built the web app that lets people follow a ride live from a browser. Postgres and DynamoDB underneath, Lambda and AppSync in front, Docker and CI/CD to get it out the door.",
-    "I started building things in 2023 and taught myself by shipping whole applications rather than pieces of them. Payments, real-time video, auth, admin tooling, all of it end to end. That's still how I learn: pick the part I don't understand and build the thing that needs it.",
-    "Outside work it's the gym, long rides, and a fair amount of time alone.",
+    "I’m currently working as a Software Engineer at RideSense, where I work on building and improving a product for motorcyclists.",
+    "My path into software wasn’t a traditional one. Before moving into software, I worked as a lift technician with Mitsubishi Electric and TKE. I started building things in 2023 and taught myself by building complete applications and learning along the way.",
+    "I enjoy figuring out how things work, solving problems, and turning ideas into something real. I learn best by building, finding something I don’t understand, and figuring it out along the way.",
+    "Outside work it’s the gym, long rides, and a fair amount of time alone.",
   ],
 
   email: "imakhilkumars@gmail.com",
