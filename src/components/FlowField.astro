@@ -1,18 +1,8 @@
 ---
 /**
- * Page backdrop — a fixed full-viewport quad running a layered, domain-warped
- * fBm field.
- *
- * Three depth planes move by different amounts against scroll and cursor. That
- * parallax is what makes it read as dimensional; a single flat noise layer
- * never does.
- *
- * Three is dynamically imported after first paint so its weight stays out of
- * the critical path. The CSS gradient is what renders immediately and is also
- * the permanent fallback when WebGL is unavailable.
- *
- * transition:persist keeps the canvas and its GL context alive across view
- * transitions, so the field never restarts mid-navigation.
+ * Page backdrop: domain-warped fBm across three parallaxing depth planes.
+ * three is imported after first paint; the CSS gradient is the immediate paint
+ * and the permanent no-WebGL fallback. transition:persist keeps the GL context.
  */
 ---
 
@@ -27,10 +17,8 @@
     z-index: 0; /* Content sits at z-index 1. See global.css. */
     pointer-events: none;
     overflow: hidden;
-    /* Flat, deliberately. This is what paints before three finishes loading,
-       and a coloured gradient there read as a flash of something else before
-       the shader arrived. Also the permanent no-WebGL fallback, so browsers
-       without it get plain charcoal rather than a stand-in. */
+    /* Flat on purpose: a coloured gradient here flashed before the shader
+       arrived. Also the permanent no-WebGL fallback. */
     background: var(--bg);
   }
 

@@ -43,17 +43,8 @@ const role = experience.find((r) => r.current);
 </section>
 
 <style>
-  /* The hero owns the first screen on its own — nothing below it should be
-     visible until you scroll.
-
-     svh, not vh: on mobile, vh is the *large* viewport (URL bar hidden), so
-     100vh overflows by the height of the browser chrome and lets the next
-     section peek in. svh is the small viewport, which is exactly what's on
-     screen at load. min-height, not height, so a short landscape screen can
-     still grow rather than clipping the text.
-
-     Two rows rather than absolute positioning for the foot: on a short screen
-     the cue and terminal are pushed down by content instead of sitting on it. */
+  /* Owns the first screen alone. svh not vh: vh is the large viewport on mobile
+     and overflows by the URL bar. min-height so short screens can still grow. */
   .hero {
     display: grid;
     grid-template-rows: 1fr auto;

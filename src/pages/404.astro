@@ -11,15 +11,9 @@ import { site } from "@/data/site";
   noindex
 >
   <section class="band band-open nf">
-    {/* Decorative, so the alt is empty and the layer is aria-hidden — the copy
-        says everything. It sits behind the text on both breakpoints rather than
-        beside it: boxed alongside, the artwork's near-black background reads as
-        a rectangle pasted onto the page, and stacked under the copy on a phone
-        it turns a 404 into something you have to scroll.
-
-        not-found-art.png is the artwork half of the reference mockup in
-        not-found.png; the other half is this page's text, which is real HTML
-        here rather than baked into a picture. */}
+    {/* Decorative: empty alt, aria-hidden. Sits behind the text rather than
+        beside it — boxed alongside, its near-black background reads as a
+        rectangle pasted on the page. */}
     <div class="nf-art" aria-hidden="true">
       <Image
         src={notFound}
@@ -65,8 +59,7 @@ import { site } from "@/data/site";
 </Base>
 
 <style>
-  /* Fills the screen like the hero does, for the same reason: there's nothing
-     below it worth peeking at. */
+  /* Fills the screen like the hero: nothing below is worth peeking at. */
   .nf {
     display: grid;
     align-content: center;
@@ -81,8 +74,7 @@ import { site } from "@/data/site";
 
   /* ---- the artwork layer ---- */
 
-  /* Full-bleed: .nf sits inside the 58rem shell, so the layer breaks out to the
-     viewport edge. Safe against 100vw's scrollbar overflow because body carries
+  /* Full-bleed out of the 58rem shell. 100vw is safe here because body carries
      overflow-x: clip. */
   .nf-art {
     position: absolute;
@@ -96,21 +88,9 @@ import { site } from "@/data/site";
     pointer-events: none;
   }
 
-  /* Phone: the art is the background, sat on the floor of the screen.
-
-     Not `inset: 0` with object-fit: cover — the artwork is landscape (1.16)
-     and a phone viewport is portrait (0.45), so covering it crops away about
-     60% of the width and you get a magnified fragment. Sizing the box to the
-     artwork's own ratio instead (156% of viewport wide by 62% tall ≈ 1.13)
-     keeps the astronaut whole, and the overhang past both edges pushes the
-     HUD panel partly off-screen so its small type stops competing with the
-     body copy. */
-  /* Full width, natural height — so the whole artwork is on screen, uncropped.
-     Any object-fit at all was the mistake here: cover has to throw away
-     whichever axis doesn't match, and the leftover edge inside the viewport is
-     what read as a pasted-on margin. At 100% width the left and right edges
-     land on the screen edges, where an edge is invisible, and only the top
-     needs dissolving. */
+  /* Phone: the art is the background, on the floor of the screen. Full width and
+     natural height so it shows uncropped — any object-fit leaves an edge inside
+     the viewport, which reads as a pasted-on margin. */
   .nf-art img {
     position: absolute;
     left: 0;
@@ -118,15 +98,13 @@ import { site } from "@/data/site";
     bottom: 0;
     width: 100%;
     height: auto;
-    /* A linear fade, not a radial one: the radial's ellipse still had ~36%
-       alpha where it crossed the top edge, and that residue was the hard line
-       across the artwork. This reaches zero at the edge by construction. */
+    /* Linear, not radial: a radial ellipse still had ~36% alpha where it
+       crossed the top edge, which drew a hard line. */
     -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 24%);
     mask-image: linear-gradient(180deg, transparent 0%, #000 24%);
   }
 
-  /* Reading scrim. Heaviest over the copy, clearing toward the floor so the
-     astronaut still reads where the text has run out. */
+  /* Reading scrim: heaviest over the copy, clearing toward the floor. */
   .nf-art::after {
     content: "";
     position: absolute;
@@ -142,9 +120,8 @@ import { site } from "@/data/site";
   }
 
   @media (min-width: 56rem) {
-    /* Laptop: art to the right of the copy, but bled off the viewport edge and
-       faded on every side instead of framed. The left stop is the important
-       one — it dissolves the art before it reaches the text. */
+    /* Laptop: art right of the copy, bled off the viewport edge and faded on
+       every side rather than framed. */
     .nf-art img {
       inset: 50% 0 auto auto;
       left: auto;
@@ -154,20 +131,8 @@ import { site } from "@/data/site";
       object-fit: cover;
       object-position: 50% 50%;
       opacity: 0.9;
-      /* The ellipse has to be *inscribed* in the box, or it never reaches zero
-         where it crosses an edge and the leftover alpha draws a straight line.
-         Radius must equal the distance from the centre to each edge that sits
-         inside the viewport: 55% across with the centre at 55% puts the left
-         edge exactly on the boundary, 50%/50% does the same top and bottom.
-         The right edge is pinned to the viewport edge, so it needs nothing.
-
-         Corners were always fine — they're further than the radius by the
-         diagonal — which is why sampling only corners said this was blending
-         when the edge midpoints were still at 21-31% alpha.
-
-         Solid to 45% then a fast fade, rather than fading the whole way from
-         the centre, so the astronaut keeps his brightness and only the last
-         stretch before each edge does the dissolving. */
+      /* The ellipse must be INSCRIBED in the box: radius = centre-to-edge for
+         every edge inside the viewport, or leftover alpha draws a hard line. */
       -webkit-mask-image: radial-gradient(
         55% 50% at 55% 50%,
         #000 45%,
@@ -180,9 +145,7 @@ import { site } from "@/data/site";
       );
     }
 
-    /* No vertical scrim on desktop — the copy has its own column, and now that
-       the mask dies at the art's left edge the two barely meet. Just a light
-       wash for the overlap. */
+    /* No vertical scrim on desktop; the copy has its own column. */
     .nf-art::after {
       background: linear-gradient(
         90deg,
@@ -229,9 +192,8 @@ import { site } from "@/data/site";
     }
   }
 
-  /* Plex Sans, not Plex Mono — mono's zero carries a dot in the middle and
-     "404" is mostly zero. Scanlines come from the repeating gradient clipped
-     to the glyphs. */
+  /* Plex Sans, not Mono: Mono's zero has a dot in it and "404" is mostly zero.
+     Scanlines are the repeating gradient clipped to the glyphs. */
   .code {
     font-family: var(--font-body);
     font-weight: 500;
@@ -346,10 +308,8 @@ import { site } from "@/data/site";
     color: var(--faint);
   }
 
-  /* Tighter on a phone — every pixel the copy gives back is floor the
-     astronaut gets to stand on without the two overlapping. Top-aligned rather
-     than centred for the same reason: centring splits the free space above and
-     below the copy, and the space below is the half the art needs. */
+  /* Tighter on a phone: every pixel the copy gives back is floor for the art.
+     Top-aligned rather than centred for the same reason. */
   @media (max-width: 55.99rem) {
     .nf {
       align-content: start;
@@ -365,9 +325,7 @@ import { site } from "@/data/site";
     }
   }
 
-  /* Short phones run out of column before the art has anywhere to go, and
-     "Return to the pipeline." ends up sitting on the astronaut's helmet. Lift
-     the copy so the two clear each other. */
+  /* Short phones: lift the copy so the note clears the astronaut's helmet. */
   @media (max-width: 55.99rem) and (max-height: 800px) {
     .nf {
       padding-block: 5.5rem 0;

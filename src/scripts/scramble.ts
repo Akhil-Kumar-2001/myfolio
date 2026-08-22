@@ -1,69 +1,24 @@
-/* ---- text scramble ----
+/* Text scramble. Never withholds text: the real string is read from the
+   server-rendered DOM, animated over, and put back.
 
-   Letters churn through random glyphs and settle left to right.
-
-   This never withholds text. The real string is read out of the DOM that the
-   server already sent, animated over in place, and put back exactly when it
-   finishes — so crawlers, no-JS visitors and reduced-motion visitors all get the
-   finished text and never see this run. That distinction is the whole reason it
-   is allowed to exist here: the site's founding bug was content that wasn't in
-   the HTML at all.
-
-   ---- two modes, and why ----
-
-   MONOSPACE (the nav, the brand, the five section labels, the footer, the hero's
-   role line — 13 of the 15 animated elements). Every glyph in a monospace face
-   has the same advance width, so a scrambled string is exactly as wide as the
-   real one. Nothing needs splitting: the whole string is rewritten through one
-   `nodeValue` assignment per text node, the DOM structure is never touched, and
-   no measurement is needed.
-
-   PROPORTIONAL (the hero `<h1>`, which is Fraunces). Here a swapped glyph *does*
-   change width and would reflow the line every frame — visible as horizontal
-   jitter. Only this mode splits each character into its own inline-block pinned
-   to its measured width (`.sc-c`, inside `.sc-w` so words stay unbreakable), and
-   only this mode restores from captured markup, because per-character spans
-   destroy the kerning and ligatures that have to come back.
-
-   Splitting everything was the earlier design and it was the likely cause of a
-   laptop-only scroll judder that survived several rounds of tuning: it put 13-54
-   extra inline-block boxes inside a `position: sticky` eyebrow — and sticky only
-   exists above 56rem, so phones never had it — plus inside the `position: fixed`
-   header. Scrolling a sticky element whose contents are dozens of boxes costs
-   layout on every frame, whether or not anything is being written. Mobile stayed
-   smooth throughout because it has no sticky and because `syncTouch` is off, so
-   touch scrolling is native and the compositor is immune to main-thread load.
-
-   Chasing the write cost instead produced two dead ends, recorded so they aren't
-   re-derived: that per-layout duration was the problem (interleaved repeat runs
-   showed 0.32ms vs 0.34ms — noise), and that `contain: layout style` fixed it (it
-   didn't). Layout *count* is the only trustworthy signal in that measurement. */
+   Monospace text is not split — one nodeValue write per text node. Only the
+   hero h1 splits, because Fraunces is proportional. Splitting everything caused
+   a laptop-only judder; see CLAUDE.md. */
 
 const POOL =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789<>/\\|[]{}#*+=-_$%&@?!";
 
 const PLAYED_KEY = "scramble:played";
 
-/** Effectively every frame. Monospace mode costs one text write per element per
-    tick regardless of how long the string is, so the budget goes on the spin. */
+/** Effectively every frame; monospace mode is one write per element per tick. */
 const TICK_MS = 16;
 
-/** How long a cell holds one glyph before picking another — the rotation speed.
-
-    **Independent of how long the animation lasts.** Duration is `delay` plus
-    `spread` at the call sites, both wall-clock; ticking more often samples the
-    same curve more finely and changes no timing.
-
-    The achieved rate is `min(frame rate, 1000 / HOLD_MS)`, measured at 0.88 swaps
-    per frame, i.e. essentially one per frame whenever frames are available. So
-    60fps hardware lands near the ~28/sec ceiling where 110ms was pinned at ~6/sec
-    however fast the machine. Headless renders this page at ~7fps, so rotation
-    speed cannot be validated there — compare swaps-per-frame, not per-second. */
+/** Rotation speed: how long a cell holds one glyph. Independent of the overall
+    duration, which is `delay` + `spread` at the call sites. */
 const HOLD_MS = 28;
 
-/** How many characters ahead of the resolve frontier keep moving. Everything
-    further ahead holds its seed glyph, so work per tick stays flat rather than
-    scaling with the length of the string (the footer line is 54 characters). */
+/** Characters around the resolve frontier that keep moving, so writes per tick
+    stay flat instead of scaling with string length. */
 const BAND = 10;
 
 /** Hard stop, so a backgrounded tab can never come back to scrambled text. */
@@ -74,15 +29,11 @@ const MAX_RUN_MS = 5000;
     arrival instead was the "I read it, then it scrambled" glitch. */
 const PREROLL = "0px 0px 25% 0px";
 
-/** Plain intersection, no insets. A "-6% 0px -12% 0px" here once broke the
-    footer: it sits at the very end of the document, so scrolling to the bottom
-    never cleared the bottom inset and its lines never counted as on screen. Any
-    inset risks excluding whatever is at the extreme of the page. */
+/** Plain intersection. An inset here broke the footer: it sits at the document
+    end, so scrolling to the bottom never cleared a bottom inset. */
 const IN_FRAME = "0px";
 
-/** A frozen element that is never scrolled to must still put its text back
-    eventually. It is off screen the whole time, so this is insurance, not
-    something anyone sees. */
+/** Insurance: puts text back on an element that is never scrolled to. */
 const STALL_MS = 30000;
 
 type Cell = {
@@ -301,18 +252,8 @@ function riseFinished(el: HTMLElement): Promise<void> {
   return Promise.all(anims.map((a) => a.finished.catch(() => undefined))).then(() => undefined);
 }
 
-/** Resolves the moment the element is genuinely on screen. Nothing else.
-
-    It deliberately does **not** also wait for scrolling to go quiet. It used to,
-    and that was the visible "static random string for a fraction of a second,
-    then it starts" — the element arrived in view still frozen and sat there until
-    the scroll settled. Waiting only on visibility means the churn begins on the
-    frame it appears, so the pause is one frame rather than a couple of hundred
-    milliseconds.
-
-    Keeping the freeze for the off-screen part is still worth it: an element
-    seeded at the pre-roll and reached slowly would otherwise churn, and pay for
-    writes, for as long as it took to get there — with nobody watching. */
+/** Visibility only — deliberately NOT also scroll-idle. Waiting for quiet meant
+    the element arrived on screen still frozen and visibly sat there. */
 function whenInFrame(el: Element): Promise<void> {
   return new Promise((resolve) => {
     const check = () => {
@@ -326,11 +267,8 @@ function whenInFrame(el: Element): Promise<void> {
   });
 }
 
-/* ---- the shared loop ----
-
-   One rAF for every running element, so N elements cost one batched pass and one
-   layout per tick rather than N of each. At page load that is the brand, five nav
-   items, the h1 and the role line all at once. */
+/* One rAF for every running element: N elements cost one batched write pass and
+   one layout per tick, not N of each. */
 
 function ensurePump() {
   if (!raf) raf = requestAnimationFrame(pump);
@@ -558,19 +496,9 @@ export function initScramble(reduce: boolean) {
     targets.push({ el, key: `eyebrow:${id || (el.textContent ?? "").trim()}`, spread: 660 });
   });
 
-  /* The Stack section's four group headers — backend, data, infrastructure,
-     frontend. Each waits for its own header to be on screen rather than for the
-     section, so they decode as you read down the columns instead of all at once.
-
-     They are mono, so they take the whole-string path and cost nothing
-     structurally. That matters more here than elsewhere: `.groups` is CSS
-     multi-column, and a content change that altered a box would force the columns
-     to rebalance. Identical advance widths mean the box never changes, so it
-     can't. Don't put a proportional face on `.group-name` without revisiting
-     this.
-
-     A shorter sweep than the section labels because the words are short — 660ms
-     across five characters crawls. */
+  /* Stack group headers, each waiting on its own header so they decode down the
+     columns. Mono matters here: .groups is multi-column, and a box change would
+     rebalance it. Don't put a proportional face on .group-name. */
   document.querySelectorAll<HTMLElement>("#stack .group-name").forEach((el, i) => {
     targets.push({ el, key: `stack:${i}`, spread: 520 });
   });

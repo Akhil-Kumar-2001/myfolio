@@ -1,14 +1,8 @@
 ---
 import { site } from "@/data/site";
 
-/**
- * On the homepage the section links are bare hashes, so Lenis intercepts them
- * and scrolls smoothly. From a project page they need the leading slash or they
- * point at anchors that don't exist there.
- *
- * This is why the header is NOT transition:persist'd — the hrefs depend on which
- * page rendered it, and a persisted header would keep the previous page's set.
- */
+/** Bare hashes on the homepage, /#hash elsewhere. This is why the header is NOT
+    transition:persist'd — a persisted one keeps the previous page's hrefs. */
 const onHome = Astro.url.pathname === "/";
 const to = (id: string) => (onHome ? `#${id}` : `/#${id}`);
 
@@ -86,10 +80,8 @@ const sections = [
     color: var(--accent);
   }
 
-  /* No colour of their own. The whole tag reads as one thing at rest and the
-     entire thing shifts to accent on hover — hover is a colour change, not a
-     reveal. (These were --rule once, which made them near-invisible until you
-     pointed at the bar.) */
+  /* No colour of their own: the whole tag shifts to accent together. Hover is a
+     colour change, not a reveal. */
   .tagmark {
     color: inherit;
   }

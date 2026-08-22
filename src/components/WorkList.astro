@@ -69,21 +69,9 @@ const entries = (await getCollection("work", ({ data }) => data.published)).sort
     display: none;
   }
 
-  /* ---- mobile: swipeable snap carousel ----
-
-     One card at a time, locked by scroll-snap so each one settles centred
-     instead of drifting. The swipe is horizontal, so vertical scroll still
-     goes straight down the page — nothing is pinned and nothing is hijacked.
-     No JavaScript.
-
-     The 9% side padding is what lets the first and last card sit centred
-     rather than jammed against an edge, and it has to match the card's share
-     of the leftover exactly or those two end up off-centre.
-
-     The card is `100%` — of the *content* box, which the padding has already
-     narrowed to 82%. Sizing it as a percentage of the padded container instead
-     (e.g. `88%`) double-counts the padding and pushes card 1 and card 4 ~20px
-     off centre, which is exactly the bug this replaced. */
+  /* Mobile: one card at a time via scroll-snap, no JS. The 9% padding and the
+     card's 100% must stay in step — 100% resolves against the content box the
+     padding already narrowed, and mismatching leaves the end cards off centre. */
   @media (max-width: 47.99rem) {
     .grid {
       display: flex;
@@ -149,20 +137,15 @@ const entries = (await getCollection("work", ({ data }) => data.published)).sort
       background 0.25s ease;
   }
 
-  /* Sits behind the body text in the bottom-right. Accent at very low opacity
-     rather than a new grey, so it stays tied to the palette.
-
-     Fully inside the card, not bleeding past the corner — the clipped version
-     read as a mistake rather than a watermark. */
+  /* Behind the body text, bottom-right. Kept fully inside the card: a version
+     that bled past the corner read as a mistake, not a watermark. */
   .ghost-num {
     position: absolute;
     right: 0.5rem;
     bottom: 0.3rem;
     z-index: 0;
-    /* Plex Sans, not Plex Mono. Mono's dotted zero is its default glyph, not an
-       OpenType alternate — `font-feature-settings: "zero" 0` renders
-       identically, verified side by side — so the only way to lose the dot is a
-       different family. Sans is already loaded, so this costs nothing. */
+    /* Plex Sans, not Mono: Mono's dotted zero is its default glyph, not an
+       OpenType alternate, so only a different family loses the dot. */
     font-family: var(--font-body);
     font-size: clamp(4.5rem, 16vw, 7rem);
     font-weight: 500;
@@ -188,12 +171,9 @@ const entries = (await getCollection("work", ({ data }) => data.published)).sort
 
   /* ---- generated visual ---- */
 
-  /* aspect-ratio rather than a fixed height, so the block scales with the card
-     in both the desktop grid and the narrower mobile carousel.
-
-     4/3, not 16/10 — the thumb is inset by the card padding now, which makes it
-     narrower and therefore shorter at a given ratio. The taller ratio brings it
-     back to roughly the same height as the text block underneath. */
+  /* aspect-ratio so the block scales with the card. 4/3 not 16/10: the padding
+     inset makes the thumb narrower and so shorter at a given ratio, and the
+     taller one matches the text block's height. */
   .shape {
     position: relative;
     display: grid;
@@ -231,8 +211,8 @@ const entries = (await getCollection("work", ({ data }) => data.published)).sort
       linear-gradient(135deg, #1e232a 0%, #15171a 100%);
   }
 
-  /* Grain. Reads properly here because the gradients underneath are mid-tone —
-     over near-black, overlay blending is effectively a no-op. */
+  /* Grain. Needs the mid-tone gradients underneath; over near-black, overlay
+     blending is a no-op. */
   .shape::after {
     content: "";
     position: absolute;
@@ -243,10 +223,9 @@ const entries = (await getCollection("work", ({ data }) => data.published)).sort
     pointer-events: none;
   }
 
-  /* Name inside the block on hover. Purely a flourish — the same name is always
-     visible as the heading below, so nothing is hidden behind hover. */
-  /* z-index because .shape::after (the grain) is the last child and would
-     otherwise paint over the name. */
+  /* Name on hover — a flourish only; the same name is always visible as the
+     heading below, so nothing hides behind hover. z-index because the grain
+     (.shape::after) is the last child and would paint over it. */
   .ghost {
     position: absolute;
     inset: 0;

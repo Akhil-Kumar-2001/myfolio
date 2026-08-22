@@ -1,20 +1,12 @@
 export const site = {
   name: "Akhil Kumar S",
 
-  /**
-   * The initial spelled out. Footer only — `name` stays canonical for the page
-   * title, the JSON-LD and the OG tags, so both spellings are on the page and
-   * both are findable. Kept in proper case even though the footer renders it
-   * lower — the casing that search engines and screen readers get should be the
-   * real one, and CSS does the styling.
-   */
+  /** Footer only; `name` stays canonical for the title, JSON-LD and OG tags, so
+      both spellings are findable. Proper case here, lower-cased by CSS. */
   fullName: "Akhil Kumar Santhosh",
 
-  /**
-   * Hero only. The full name wraps to two lines at display size and reads worse
-   * for it. `name` stays canonical everywhere that matters for search — the
-   * page title, the JSON-LD, and the footer.
-   */
+  /** Hero only; the full name wraps to two lines at display size. `name` stays
+      canonical for the title and JSON-LD. */
   shortName: "Akhil",
   role: "Software engineer",
   location: "Kollam, Kerala",
@@ -23,11 +15,7 @@ export const site = {
   lede:
     "I spend most of my time on the parts of an application nobody sees. The API layer, the database, the pipeline that ships it. Sometimes the part people do see.",
 
-  /**
-   * The hero's "Currently:" line. The whole point of it is that it's specific
-   * and current, so it dates fast by design — keep it honest or drop it.
-   * Rendered as "Currently: {now} @ {company}".
-   */
+  /** Hero's "Currently:" line. Dates fast by design — keep it true or delete it. */
   now: "shipping a new pipeline",
 
   /** Meta description. Kept under 155 characters. */
@@ -64,11 +52,8 @@ export type Role = {
   summary: string;
 };
 
-/**
- * The role, not the product. RideSense the company belongs here; RideSense the
- * app belongs in src/content/work. Keeping that line clean is what stops this
- * section and the work section saying the same thing twice.
- */
+/** The role, not the product — the app belongs in src/content/work. Keeps this
+    section and the work section from saying the same thing twice. */
 export const experience: Role[] = [
   {
     company: "RideSense",

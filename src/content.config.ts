@@ -10,17 +10,10 @@ const work = defineCollection({
     year: z.string(),
     role: z.string(),
 
-    /**
-     * The lede, written as the problem. Becomes the h1 on the detail page.
-     * No tech names here.
-     */
+    /** The problem, as one sentence. Becomes the h1. No tech names. */
     problem: z.string(),
 
-    /**
-     * One or two lines for the card. Keep it short — plain description of what
-     * the thing is and what it does. The problem sentence and the outcome carry
-     * the detail page, so this does not need to do their job.
-     */
+    /** One or two lines for the card. The detail page carries the depth. */
     summary: z.string(),
 
     /** What you built and what it does. Two or three sentences. */

@@ -43,14 +43,9 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  /* Deliberately not `smooth`, and not left to the default either.
-     Astro's swapRootAttributes() strips every attribute off <html> on
-     navigation and reapplies the new document's, which drops the `lenis` class
-     Lenis added at runtime. Any `html.lenis { scroll-behavior: auto }` override
-     therefore stops matching mid-swap — and with `smooth` on the base rule, the
-     router's history scroll restore animates instead of jumping, so pressing
-     Back visibly scrolls up to the hero and back down to where you were.
-     Lenis supplies the smoothness for in-page anchors; navigation is instant. */
+  /* NOT `smooth`. Astro strips every <html> attribute on navigation, dropping
+     the runtime `lenis` class, so an html.lenis override stops matching mid-swap
+     and Back visibly animates through the hero. Lenis handles in-page anchors. */
   scroll-behavior: auto;
   background: var(--bg);
   scrollbar-width: thin;
@@ -254,11 +249,8 @@ html.lenis body {
   margin: 0;
 }
 
-/* Section labels track the content they belong to.
-
-   top must clear the fixed header (3.25rem tall) or the label sticks *behind*
-   it. Matches .band's scroll-margin-top so a nav jump and a manual scroll park
-   the label in the same place. */
+/* Sticky section labels. `top` must clear the 3.25rem header or the label
+   sticks behind it. Keep in step with .band's scroll-margin-top. */
 @media (min-width: 56rem) {
   .row > .eyebrow {
     position: sticky;
@@ -327,16 +319,9 @@ html.lenis body {
   border-bottom-color: var(--accent);
 }
 
-/* ---- text scramble ----
-
-   Both classes are created only by src/scripts/scramble.ts and removed again
-   when it restores the original markup, so nothing in the served HTML uses
-   them.
-
-   .sc-c is what holds the line still: each character is pinned to its measured
-   width, so swapping a glyph of a different advance width can't reflow the
-   line. .sc-w keeps a word's characters together, because inline-block
-   children would otherwise let a break land inside a word. */
+/* Created and removed by scramble.ts; never in the served HTML. .sc-c pins each
+   character to its measured width so a swap can't reflow the line, .sc-w keeps a
+   word from breaking mid-way. */
 
 .sc-w {
   white-space: nowrap;

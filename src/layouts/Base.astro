@@ -29,10 +29,7 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    {/* No canonical on the 404 — a self-referencing canonical claims the URL is
-        the authoritative address for this content, which invites indexing of a
-        page that stands in for every address that doesn't exist. `follow` so
-        the links out of it still pass through. */}
+    {/* No canonical on the 404: it would invite indexing. */}
     {
       noindex ? (
         <meta name="robots" content="noindex, follow" />
@@ -47,10 +44,8 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    {/* Dimensions declared because several scrapers — LinkedIn and WhatsApp
-        notably — will render a preview from the tags before they finish
-        downloading the image, and without these they either lay out the card
-        wrong or drop the image. 1200x630 is the 1.91:1 that Open Graph wants. */}
+    {/* Dimensions declared: LinkedIn and WhatsApp lay the card out before the
+        image finishes downloading. */}
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -61,22 +56,9 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
     <meta name="twitter:image" content={ogImage} />
     <meta name="twitter:image:alt" content={`${site.name} — ${site.role}`} />
 
-    {/* These live in public/ and are served verbatim — they are NOT run through
-        Astro's image pipeline, because a <link rel="icon"> needs a stable path
-        and astro:assets would give it a hashed one.
-
-        Cropped and resized from design/fav-icon.png (1254x1254), which is
-        gitignored and local only: 650KB is far too heavy to ship for something
-        drawn at 16 CSS pixels. design/NOTES.md has the sharp commands.
-
-        The badge is a rounded square, so 32 and 48 carry the rounded shape with
-        the corners masked to transparency. 48 as well as 32 because Chrome
-        reaches for it in the bookmark and history lists.
-
-        180 is deliberately the odd one out: square, opaque, NOT rounded. iOS
-        applies its own squircle mask to an apple-touch-icon, so a pre-rounded
-        transparent icon gets clipped twice and looks wrong. It is flattened onto
-        black, which is the badge's own background rather than --bg. */}
+    {/* In public/, not astro:assets: <link rel="icon"> needs a stable path.
+        Generated from design/fav-icon.png, see design/NOTES.md.
+        180 is square and opaque because iOS applies its own squircle mask. */}
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48" />
     <link rel="apple-touch-icon" href="/favicon-180.png" />
@@ -107,24 +89,12 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
 
     <footer class="foot">
       <div class="shell">
-        {/* Every claim here is true of this repo: Astro builds it, FlowField.astro
-            runs three, Lenis drives every scroll, and the backdrop is a
-            hand-written vertex/fragment pair fed to ShaderMaterial rather than
-            anything off the shelf. Don't leave the line standing if that stops
-            being the case. Ordered libraries first, hand-written last. */}
+        {/* Every claim here is true of this repo. Drop the line if that changes. */}
         <p class="rail built">Built with Astro, three.js, Lenis, custom GLSL.</p>
 
-        {/* The hero says "Akhil", so this is the only place a full name appears in
-            the body copy — worth keeping for anyone searching it. site.fullName
-            spells out the S; site.name keeps the initial for the title and the
-            JSON-LD, so both spellings are on the page.
-
-            The domain is derived from site.url so the two can't drift apart. */}
-        {/* The name and the domain are each held in a nowrap span. At 320px the
-            line has to wrap, and left to itself it broke the name in half —
-            "akhil kumar / santhosh". With these, the only break opportunities are
-            between the units, so it wraps before the domain and the name stays
-            whole. */}
+        {/* The only full name in body copy; keep it findable. Domain derives from
+            site.url so the two can't drift. */}
+        {/* nowrap spans, or 320px breaks the name in half. */}
         <p class="rail sig">
           &copy; {new Date().getFullYear()} <span class="nb">{site.fullName}</span>
           <span class="nb"><span class="dot" aria-hidden="true">&middot;</span> {domain}</span>
@@ -141,30 +111,18 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
     padding-block: 2rem 3rem;
   }
 
-  /* Two stacked lines, not the .row rail grid the footer used to use. .rail is
-     kept as the class so the scramble keeps finding these (it targets
-     .foot .rail), but two of its behaviours have to be undone here: it is
-     right-aligned above 56rem, which only makes sense in the metadata column,
-     and it carried the grid's top padding. */
+  /* .rail is kept because the scramble targets .foot .rail, but its
+     right-alignment and top padding have to be undone here. */
   .foot .rail {
     text-align: left;
     padding-top: 0;
-    /* Displayed lower-case, stored in proper case. Search engines and screen
-       readers get "Akhil Kumar Santhosh" and "Astro ... GLSL"; the page shows
-       them lower. Same trick as the hero's role line. */
+    /* Lower-cased by CSS only: the DOM keeps real casing for search. */
     text-transform: lowercase;
     max-width: none;
   }
 
-  /* The stack list is just long enough to wrap on a phone, and `balance` splits it
-     evenly instead of leaving a two-word orphan — it broke after "lenis," and
-     dropped "custom glsl." onto a line of its own. Inherited `text-wrap: pretty`
-     from the global `p` rule is the fallback where balance isn't supported, so
-     this is additive.
-
-     Deliberately NOT on .sig: with the nowrap units below, plain greedy wrapping
-     already fills the first line and pushes only the domain down, which is the
-     break we want. Balancing it instead risks stranding "© 2026" on a line alone. */
+  /* balance stops the stack list orphaning "custom glsl." on a phone. NOT on
+     .sig — greedy wrapping there is what keeps "© 2026" off a line alone. */
   .foot .built {
     text-wrap: balance;
     margin-bottom: 1.25rem;
@@ -178,9 +136,7 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
     color: var(--soft);
   }
 
-  /* --faint, not --rule. --rule is the hairline colour (#2A2D31) and against the
-     page it read as no separator at all. This sits just under the signature's
-     --soft so it divides without competing. */
+  /* --faint, not --rule: the hairline colour reads as no separator at all. */
   .dot {
     margin-right: 0.15em;
     color: var(--faint);
@@ -261,40 +217,21 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
     // registration below. Once defaultPrevented is set, the router stands down.
     e.preventDefault();
 
-    // No offset here on purpose: Lenis already subtracts the target's
-    // scroll-margin-top itself, and .band carries 4.5rem. Passing an offset too
-    // would clear the header twice and undershoot by another 72px.
-    //
-    // Duration scales with distance so a hop to the next section stays quick
-    // while a jump from Contact back to the top still reads as travel.
+    // No offset: Lenis already subtracts scroll-margin-top, and .band carries
+    // 4.5rem. Passing one too undershoots by another 72px.
     const distance = Math.abs(target.getBoundingClientRect().top);
     const duration = Math.min(1.7, Math.max(0.65, distance / 2000));
     lenis.scrollTo(target, { duration });
 
-    // replaceState carrying the EXISTING state object through, never
-    // pushState(null, ...).
-    //
-    // Astro keeps {index, scrollX, scrollY} in history.state and its router
-    // depends on it. Passing null wiped it, after which clicking a project card
-    // silently did nothing — the router could not navigate at all — and Back
-    // just walked the browser's hash entries instead.
-    //
-    // replace rather than push so a nav click doesn't add an entry per section:
-    // Back from a case study then returns to the homepage entry itself, whose
-    // scroll position we already restore.
+    // Must carry the EXISTING state through, never pushState(null, ...): Astro
+    // keeps {index, scrollX, scrollY} there and the router stops navigating
+    // without it. replace, not push, so a nav click adds no history entry.
     history.replaceState(history.state, "", `#${id}`);
   }
 
-  /* ---- returning to the work grid ----
-
-     "All work" on a case study points at /#work, and Astro's router scrolls to
-     the top of the page before applying the hash. That top state is visible, and
-     the hash only ever lands you on the section heading — so opening the fourth
-     card and coming back dropped you ~580px above where you were.
-
-     Fix: remember the exact position on the way out, put it back on the way in.
-     Astro fires astro:after-swap *after* moveToLocation() has done all of its
-     own scrolling (router.js:215-216), so setting it there is final. */
+  /* Returning to the work grid. The hash alone only lands on the section
+     heading, so store the exact position. Must be applied in astro:after-swap —
+     earlier hooks get overwritten by the router. */
 
   const WORK_POS = "work:pos";
 
@@ -415,22 +352,9 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
     paint();
   }
 
-  /* ---- keep the reload position honest ----
-
-     On a fresh load Astro restores history.state.scrollY (router.js:45). It
-     keeps that value current by listening for `scrollend` (router.js:402-412) —
-     but Lenis registers its own capture-phase `scrollend` listener on window and
-     calls stopPropagation() whenever isScrolling is "smooth" or false, so the
-     event can die before Astro ever sees it.
-
-     On desktop that rarely bites: smoothWheel means Lenis drives the scroll and
-     dispatches its own CustomEvent scrollend, which its filter lets through. On
-     mobile syncTouch is off, so touch scrolling is native and Lenis flips
-     isScrolling to false on a 400ms timeout — if the browser's scrollend lands
-     after that flip it gets swallowed, history.state goes stale, and refreshing
-     drops you back at wherever it last managed to record.
-
-     So write the position ourselves rather than depending on that event. */
+  /* Astro tracks the reload position via `scrollend`, which Lenis swallows with
+     stopPropagation. Mobile is where it bites: refreshing landed you somewhere
+     random. So write the position ourselves. */
   let reloadPosTimer = 0;
 
   function rememberScrollForReload() {
@@ -535,19 +459,10 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
     // actually are rather than letting it animate from a stale position.
     lenis?.resize();
 
-    // stop() + start(), NOT scrollTo(window.scrollY, { immediate: true }).
-    //
-    // Tapping a card mid-glide leaves a Lenis animation running. If it survives
-    // the swap it writes its old target into the new document, and because a
-    // case study is far shorter than the homepage (309-743px against ~3300px)
-    // that write clamps to the maximum — the project opens at its very end.
-    //
-    // scrollTo cannot fix it: it bails out early when the requested target
-    // equals targetScroll, which resize() has just made true, so it never
-    // reaches reset() and the animation keeps running. stop() and start() both
-    // go through reset(), which calls animate.stop(). They run synchronously in
-    // the same tick, so the lenis-stopped class (overflow: hidden in
-    // global.css) is added and removed without a paint in between.
+    // stop() + start(), NOT scrollTo(..., { immediate: true }). A Lenis
+    // animation surviving the swap writes its old target into the shorter new
+    // document and the project opens at its end. scrollTo bails early when the
+    // target already equals targetScroll, so it never reaches reset().
     lenis?.stop();
     lenis?.start();
   });
