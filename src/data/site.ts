@@ -70,7 +70,7 @@ export const experience: Role[] = [
     company: "Brototype",
     title: "Full stack developer intern",
     period: "Feb 2024 — 2025",
-    location: "Trivandrum, Kazhakoottam, India",
+    location: "Trivandrum, Kerala, India",
     arrangement: "onsite",
     summary:
       "Full stack development. Alongside it I built SipSavvy and Elevio end to end, teaching myself by shipping complete applications rather than following tutorials.",
