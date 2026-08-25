@@ -16,9 +16,7 @@
     top: 0;
     left: 0;
     right: 0;
-    /* NOT inset: 0. Height must not track the viewport, or a phone hiding its
-       URL bar reallocates the GL buffer mid-transition. lvh is the height with
-       browser chrome retracted, so it never changes as the chrome moves. */
+    /* lvh, not inset: 0 — the height must not track the viewport. */
     height: 100vh;
     height: 100lvh;
     z-index: 0; /* Content sits at z-index 1. See global.css. */
@@ -230,8 +228,7 @@
     mesh.frustumCulled = false; // We bypass the matrices in the vertex shader.
     scene.add(mesh);
 
-    // Only re-measured on a width change, i.e. a real orientation change.
-    // Height alone moves when mobile browser chrome hides, which must not count.
+    // Re-measured on width change only; height moves when mobile chrome hides.
     let refHeight = Math.max(window.innerHeight, 1);
     let refWidth = window.innerWidth;
 
@@ -271,9 +268,7 @@
       elapsed += acc;
       acc = 0;
 
-      // Scroll in viewport units, eased so the parallax never snaps. refHeight,
-      // not innerHeight: a phone's URL bar hiding changes innerHeight and would
-      // shift the parallax for no reason.
+      // refHeight, not innerHeight, or mobile chrome hiding shifts the parallax.
       const target = window.scrollY / refHeight;
       scrollSmooth += (target - scrollSmooth) * 0.08;
 
@@ -304,8 +299,6 @@
     const onVisibility = () => (document.hidden ? pause() : play());
     document.addEventListener("visibilitychange", onVisibility);
 
-    // Width-gated. Reallocating the drawing buffer is expensive and visible, and
-    // mobile browser chrome retracting is not a reason to do it.
     let lastW = 0;
     let lastH = 0;
     const ro = new ResizeObserver(() => {

@@ -55,8 +55,7 @@ const sections = [
     background: rgba(21, 23, 26, 0.55);
     backdrop-filter: blur(14px) saturate(1.15);
     -webkit-backdrop-filter: blur(14px) saturate(1.15);
-    /* Own compositing layer. A fixed element with a backdrop-filter over a WebGL
-       canvas otherwise repaints with the page every time mobile chrome moves. */
+    /* Own layer: the backdrop-filter otherwise repaints with the page. */
     transform: translateZ(0);
     will-change: transform;
   }

@@ -406,11 +406,8 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
   /* ---- scroll reveal ---- */
 
   function initReveal() {
-    // One-shot on every browser. animation-timeline: view() was smoother, but
-    // its range is viewport-relative: when a phone's URL bar hides, innerHeight
-    // changes, the range recalculates, and anything mid-reveal jumps. Measured
-    // at 8.4px of travel plus an opacity step. Settling each element once and
-    // unobserving makes a viewport change unable to move it.
+    // One-shot, not animation-timeline: view() — its range is viewport-relative
+    // and anything mid-reveal jumped when mobile chrome hid. See CLAUDE.md.
     if (reduce) return;
 
     document.documentElement.dataset.revealJs = "";
