@@ -37,7 +37,7 @@ export const site = {
   /* Google Drive link. Works, but see the README — hosting the PDF at /cv.pdf
      yourself is better: no sign-in prompt, no permission failures, and it stays
      on your own domain. */
-  cv: "https://drive.google.com/file/d/1bFyee5Rd5Laax53qGLxibvTxTXM0koWt",
+  cv: "https://drive.google.com/file/d/11NsA51z9m9NReA_1-lhzQyOWFTEST2Eg/view",
 };
 
 export type Role = {
