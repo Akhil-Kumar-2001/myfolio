@@ -117,7 +117,7 @@ Three things in there are load-bearing:
   per-character boxes instead put dozens of extra inline-blocks inside a
   `position: sticky` element — which only exists above `56rem` — and produced a
   scroll judder that showed up on laptops and never on phones.
-- **Only the hero `<h1>` splits**, because Fraunces is proportional and a swapped
+- **Only the hero `<h1>` splits**, because its face is proportional and a swapped
   glyph there really does change width. Each character gets an inline-block pinned
   to its measured width, and the original markup is restored rather than rebuilt,
   because per-character spans lose kerning and ligatures.
@@ -175,7 +175,7 @@ There is a comment saying so in the fragment shader.
 - Per-page title and description
 - Open Graph and Twitter cards, with `public/og-image.png` at 1200×630 and its
   dimensions declared in the tags. The card is rendered from `og.html`-style
-  markup in the site's own Fraunces and IBM Plex rather than drawn by hand, so it
+  markup in the site’s own IBM Plex rather than drawn by hand, so it
   can be regenerated if the name, role or palette change
 - `Person` JSON-LD on the homepage, `CreativeWork` on each case study
 - `sitemap-index.xml` generated at build; the 404 is excluded

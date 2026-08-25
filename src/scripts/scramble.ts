@@ -2,7 +2,7 @@
    server-rendered DOM, animated over, and put back.
 
    Monospace text is not split — one nodeValue write per text node. Only the
-   hero h1 splits, because Fraunces is proportional. Splitting everything caused
+   hero h1 splits, because its face is proportional. Splitting everything caused
    a laptop-only judder; see CLAUDE.md. */
 
 const POOL =
