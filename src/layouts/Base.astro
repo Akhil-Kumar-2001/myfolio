@@ -166,6 +166,7 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
   let lenis: Lenis | null = null;
   let observer: IntersectionObserver | null = null;
   let navObserver: IntersectionObserver | null = null;
+  let numObserver: IntersectionObserver | null = null;
   let paintNav: (() => void) | null = null;
   let stopProgress: (() => void) | null = null;
 
@@ -405,6 +406,27 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
 
   /* ---- scroll reveal ---- */
 
+  // Watches the card numerals, not the cards. The card observer fires on the
+  // card's top edge and the numeral is at the bottom, so it spun off screen.
+  function initCardNums() {
+    if (reduce) return;
+
+    numObserver?.disconnect();
+    numObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.classList.add("is-in");
+          numObserver?.unobserve(entry.target);
+        }
+      },
+      // Most of the numeral has to be on screen, or it spins half out of frame.
+      { threshold: 0.6 },
+    );
+
+    document.querySelectorAll(".ghost-num").forEach((el) => numObserver!.observe(el));
+  }
+
   function initReveal() {
     // One-shot, not animation-timeline: view() — its range is viewport-relative
     // and anything mid-reveal jumped when mobile chrome hid. See CLAUDE.md.
@@ -438,11 +460,20 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
   // Capture too, so it records the position before the router navigates away.
   document.addEventListener("click", rememberWorkScroll, { capture: true });
 
+  // The router leaves scrollRestoration on "manual", so a reload paints at the
+  // top and scrolls after — a visible flash of the hero. Handing it back on the
+  // way out lets the browser restore before first paint. SPA swaps never fire
+  // pagehide, so the router keeps manual control of those.
+  window.addEventListener("pagehide", () => {
+    history.scrollRestoration = "auto";
+  });
+
   document.addEventListener("astro:page-load", () => {
     initScroll();
     stopProgress?.();
     initProgress();
     initReveal();
+    initCardNums();
     initNav();
     // Last: it reads computed styles and measures text, so let the rest settle
     // first. It gates itself to once per element per session.
@@ -472,6 +503,8 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
     observer = null;
     navObserver?.disconnect();
     navObserver = null;
+    numObserver?.disconnect();
+    numObserver = null;
     // Puts any in-flight run back to its original markup. Without this a swap
     // mid-animation would carry half-scrambled text into the next page.
     stopScramble();

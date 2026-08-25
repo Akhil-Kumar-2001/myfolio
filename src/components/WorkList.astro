@@ -44,7 +44,12 @@ const entries = (await getCollection("work", ({ data }) => data.published)).sort
             {/* Watermark in the bottom-right, behind the text. Decoration — the
                 same number is real text in the meta line above. */}
             <span class="ghost-num" aria-hidden="true">
-              {String(i + 1).padStart(3, "0")}
+              {String(i + 1)
+                .padStart(3, "0")
+                .split("")
+                .map((digit, j) => (
+                  <span class="gn" style={`--j: ${j}`}>{digit}</span>
+                ))}
             </span>
           </article>
         ))
@@ -155,6 +160,52 @@ const entries = (await getCollection("work", ({ data }) => data.published)).sort
     opacity: 0.08;
     pointer-events: none;
     user-select: none;
+  }
+
+  /* Flip the numeral as the card arrives. Gated on [data-reveal-js], which
+     initReveal only sets when motion is allowed — so reduced-motion and no-JS
+     visitors get the plain 0.08 watermark and never a hidden one. */
+  :global([data-reveal-js]) .ghost-num {
+    opacity: 1;
+  }
+
+  .gn {
+    display: inline-block;
+  }
+
+  :global([data-reveal-js]) .gn {
+    opacity: 0;
+  }
+
+  /* Left to right: --j staggers the digits within a number, --i the cards. */
+  :global([data-reveal-js]) .ghost-num.is-in .gn {
+    animation:
+      spin-num 0.95s var(--ease-out) both,
+      fade-num 1.9s linear both;
+    animation-delay: calc(var(--i, 0) * 90ms + var(--j, 0) * 150ms);
+  }
+
+  @keyframes spin-num {
+    from {
+      transform: perspective(600px) rotateX(0deg);
+    }
+    to {
+      transform: perspective(600px) rotateX(360deg);
+    }
+  }
+
+  /* Brighter than the 0.08 resting value while it turns, or the spin is
+     invisible. The long linear tail is what stops it snapping dim on landing. */
+  @keyframes fade-num {
+    from {
+      opacity: 0;
+    }
+    9% {
+      opacity: 0.22;
+    }
+    to {
+      opacity: 0.08;
+    }
   }
 
   .card:hover {
