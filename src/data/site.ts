@@ -32,7 +32,7 @@ export const site = {
   email: "imakhilkumars@gmail.com",
   github: "https://github.com/Akhil-Kumar-2001",
   linkedin: "https://www.linkedin.com/in/meakhil",
-  instagram: "https://www.instagram.com/im.akhilkumar.s",
+  instagram: "https://www.instagram.com/im.akh.il",
 
   /* Google Drive link. Works, but see the README — hosting the PDF at /cv.pdf
      yourself is better: no sign-in prompt, no permission failures, and it stays
