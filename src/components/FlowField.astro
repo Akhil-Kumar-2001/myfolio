@@ -351,10 +351,11 @@
     const onVisibility = () => (document.hidden ? pause() : play());
     document.addEventListener("visibilitychange", onVisibility);
 
-    // A running loop picks the new uniforms up next frame; a still one won't.
+    // Render now, not on the loop's next tick: the theme reveal snapshots the
+    // page straight after this, and a stale frame would sweep in the old sky.
     const onTheme = () => {
       applyPalette();
-      if (!running) renderer.render(scene, camera);
+      renderer.render(scene, camera);
     };
     document.addEventListener("theme:change", onTheme);
 

@@ -50,6 +50,20 @@
   --bone: #7a5a12;
 }
 
+/* The circular theme reveal (theme.ts). Scoped to data-theme-reveal so Astro's
+   page-navigation transitions keep their own animations. */
+:root[data-theme-reveal]::view-transition-old(root),
+:root[data-theme-reveal]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* One snapshot only. The hero name carries its own transition name and would
+   otherwise cross-fade on its own clock while the circle sweeps past it. */
+:root[data-theme-reveal] * {
+  view-transition-name: none !important;
+}
+
 /* Kill transitions for the one frame the theme swaps, or links fade while the
    text around them snaps. Set and cleared by theme.ts. */
 :root[data-theme-switching] *,
