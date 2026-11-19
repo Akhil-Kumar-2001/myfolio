@@ -1,7 +1,8 @@
 ---
 /**
- * Page backdrop: domain-warped fBm across three parallaxing depth planes.
- * three is imported after first paint; the CSS gradient is the immediate paint
+ * Page backdrop: an aurora of ridged fBm across three parallaxing planes. Dark
+ * adds light; light stains the paper with pale washes instead.
+ * three is imported after first paint; the flat --bg is the immediate paint
  * and the permanent no-WebGL fallback. transition:persist keeps the GL context.
  */
 ---
@@ -49,7 +50,7 @@
 </style>
 
 <script>
-  import type { Mesh, ShaderMaterial, WebGLRenderer } from "three";
+  import type { Mesh, ShaderMaterial, Vector3, WebGLRenderer } from "three";
 
   const VERT = `
     void main() {
@@ -65,11 +66,12 @@
     uniform vec2  uPointer;
     uniform float uScroll;
 
-    // Palette lifted from global.css so the canvas and the page agree.
-    const vec3 BG   = vec3(0.082, 0.090, 0.102); // #15171a
-    const vec3 MOSS = vec3(0.525, 0.663, 0.306); // #86a94e
-    const vec3 BONE = vec3(0.851, 0.796, 0.639); // #d9cba3
-    const vec3 COLD = vec3(0.255, 0.365, 0.435); // cool steel, for the far plane
+    // Set from the script below on every theme change.
+    uniform vec3  uBg;
+    uniform vec3  uMoss;
+    uniform vec3  uBone;
+    uniform vec3  uCold;   // cool steel, for the far plane
+    uniform float uLight;  // 0 adds light (dark), 1 stains paper (light)
 
     vec2 hash2(vec2 p) {
       p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
@@ -137,7 +139,7 @@
       vec2 ptr = (uPointer - 0.5 * uRes) / s;
 
       float t = uTime * 0.07;
-      vec3 col = BG;
+      vec3 col = uBg;
 
       for (int i = 0; i < 3; i++) {
         float fi = float(i);
@@ -155,9 +157,16 @@
         // reads as green stone and swallows the type.
         float wisp = pow(smoothstep(0.55, 0.95, v), 2.0);
 
-        vec3 tint = mix(COLD, MOSS, depth);
-        col += tint * wisp * (0.13 * depth);
-        col += BONE * pow(wisp, 4.0) * (0.05 * depth);
+        vec3 tint = mix(uCold, uMoss, depth);
+        // Uniform branch: every pixel takes the same side, so it costs nothing.
+        if (uLight > 0.5) {
+          // Paper can't be lit brighter, so the wisps stain it, like ink in water.
+          col = mix(col, tint, wisp * 0.42 * depth);
+          col = mix(col, uBone, pow(wisp, 4.0) * 0.22 * depth);
+        } else {
+          col += tint * wisp * (0.13 * depth);
+          col += uBone * pow(wisp, 4.0) * (0.05 * depth);
+        }
       }
 
       // Calm the middle so the content column keeps its contrast, and let the
@@ -167,7 +176,7 @@
       // cancels the edge bloom out and flattens the whole field to nothing.
       // Kept tight (3.2) so it protects the text column and not half the screen.
       float trough = 1.0 - 0.42 * exp(-pow((uv.x - 0.5) * 3.2, 2.0));
-      col = BG + (col - BG) * trough;
+      col = uBg + (col - uBg) * trough;
 
       // Film grain, plus enough dither to stop flat darks banding on 8-bit.
       float g = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
@@ -179,6 +188,26 @@
 
   let teardown: (() => void) | null = null;
   let mounted: HTMLCanvasElement | null = null;
+
+  /** Shader-only colours, sRGB 0–1. Dark takes moss and bone from the tokens.
+      Light can't: its tokens are dark inks for text, and the washes have to be
+      pale or the wisps turn into stains that fight the type. */
+  const DARK_COLD = [0.255, 0.365, 0.435] as const; // cool steel
+  const LIGHT_WASH = {
+    moss: [0.663, 0.745, 0.545], // soft sage    #a9be8b
+    cold: [0.624, 0.706, 0.765], // mist blue    #9fb4c3
+    bone: [0.839, 0.737, 0.557], // warm sand    #d6bc8e
+  } as const;
+
+  /** Plain sRGB 0–1, deliberately not THREE.Color: that converts to linear and
+      would shift every colour, since this shader writes its output raw. */
+  function readToken(name: string, into: Vector3) {
+    const hex = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const m = /^#([0-9a-f]{6})$/i.exec(hex);
+    if (!m) return;
+    const n = parseInt(m[1]!, 16);
+    into.set(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+  }
 
   async function start(host: HTMLElement, canvas: HTMLCanvasElement) {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -221,8 +250,31 @@
         uRes: { value: new THREE.Vector2(1, 1) },
         uPointer: { value: new THREE.Vector2(0, 0) },
         uScroll: { value: 0 },
+        uBg: { value: new THREE.Vector3() },
+        uMoss: { value: new THREE.Vector3() },
+        uBone: { value: new THREE.Vector3() },
+        uCold: { value: new THREE.Vector3() },
+        uLight: { value: 0 },
       },
     });
+
+    function applyPalette() {
+      const u = material.uniforms;
+      const light = document.documentElement.dataset.theme === "light";
+      readToken("--bg", u.uBg.value);
+      if (light) {
+        u.uMoss.value.set(...LIGHT_WASH.moss);
+        u.uCold.value.set(...LIGHT_WASH.cold);
+        u.uBone.value.set(...LIGHT_WASH.bone);
+      } else {
+        readToken("--accent", u.uMoss.value);
+        readToken("--bone", u.uBone.value);
+        u.uCold.value.set(...DARK_COLD);
+      }
+      u.uLight.value = light ? 1 : 0;
+    }
+
+    applyPalette();
 
     const mesh: Mesh = new THREE.Mesh(geometry, material);
     mesh.frustumCulled = false; // We bypass the matrices in the vertex shader.
@@ -299,6 +351,13 @@
     const onVisibility = () => (document.hidden ? pause() : play());
     document.addEventListener("visibilitychange", onVisibility);
 
+    // A running loop picks the new uniforms up next frame; a still one won't.
+    const onTheme = () => {
+      applyPalette();
+      if (!running) renderer.render(scene, camera);
+    };
+    document.addEventListener("theme:change", onTheme);
+
     let lastW = 0;
     let lastH = 0;
     const ro = new ResizeObserver(() => {
@@ -332,6 +391,7 @@
       pause();
       ro.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
+      document.removeEventListener("theme:change", onTheme);
       window.removeEventListener("pointermove", onPointerMove);
       geometry.dispose();
       material.dispose();

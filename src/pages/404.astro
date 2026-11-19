@@ -14,6 +14,8 @@ import { site } from "@/data/site";
     {/* Decorative: empty alt, aria-hidden. Sits behind the text rather than
         beside it — boxed alongside, its near-black background reads as a
         rectangle pasted on the page. */}
+    {/* Lazy so light mode, which hides it, never downloads it: a display:none
+        lazy image is never fetched. In dark it's in view, so it still loads. */}
     <div class="nf-art" aria-hidden="true">
       <Image
         src={notFound}
@@ -21,7 +23,7 @@ import { site } from "@/data/site";
         widths={[480, 700, 906]}
         sizes="(min-width: 56rem) 58vw, 100vw"
         quality={72}
-        loading="eager"
+        loading="lazy"
       />
     </div>
 
@@ -86,6 +88,12 @@ import { site } from "@/data/site";
     z-index: 0;
     overflow: hidden;
     pointer-events: none;
+  }
+
+  /* The art is a night scene with a near-black ground; on paper it's a dark
+     slab. Light mode drops it and lets the backdrop carry the page. */
+  :global([data-theme="light"]) .nf-art {
+    display: none;
   }
 
   /* Phone: the art is the background, on the floor of the screen. Full width and
@@ -204,14 +212,25 @@ import { site } from "@/data/site";
     background-image:
       repeating-linear-gradient(
         to bottom,
-        rgba(134, 169, 78, 0.95) 0 2px,
-        rgba(134, 169, 78, 0.3) 2px 4px
+        color-mix(in srgb, var(--accent) 95%, transparent) 0 2px,
+        color-mix(in srgb, var(--accent) 30%, transparent) 2px 4px
       ),
       linear-gradient(180deg, #a3c569 0%, #37501f 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     user-select: none;
+  }
+
+  /* Darker underlay, or the faint scanlines vanish into paper. */
+  :global([data-theme="light"]) .code {
+    background-image:
+      repeating-linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--accent) 95%, transparent) 0 2px,
+        color-mix(in srgb, var(--accent) 30%, transparent) 2px 4px
+      ),
+      linear-gradient(180deg, #6f8f3a 0%, #2c4210 100%);
   }
 
   .head {
@@ -256,7 +275,7 @@ import { site } from "@/data/site";
     color: var(--accent);
     text-decoration: none;
     /* The art sits behind these, so they need their own ground. */
-    background: rgb(21 23 26 / 0.55);
+    background: color-mix(in srgb, var(--bg) 55%, transparent);
     backdrop-filter: blur(2px);
     transition:
       background 0.22s ease,
@@ -264,7 +283,7 @@ import { site } from "@/data/site";
   }
 
   .btn:hover {
-    background: rgba(134, 169, 78, 0.14);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
   }
 
   .prompt {

@@ -2,7 +2,8 @@
 @import "@fontsource/ibm-plex-sans/500.css";
 @import "@fontsource/ibm-plex-mono/400.css";
 
-/* Palette B — charcoal and moss. Dark only, by choice. */
+/* Charcoal and moss is the default; paper and moss below. data-theme is set
+   before first paint by the inline script in Base.astro. */
 :root {
   color-scheme: dark;
 
@@ -34,6 +35,29 @@
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* Every text token clears 4.5:1 on --bg. The dark moss and bone would not
+   (2.4:1 and 1.4:1 on paper), so both have their own light values. */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f3f1ea;
+  --raised: #e9e6dc;
+  --text: #1b1d20;
+  --soft: #565853;
+  --faint: #676963;
+  --rule: #d9d5c9;
+  --accent: #4f6b22;
+  --bone: #7a5a12;
+}
+
+/* Kill transitions for the one frame the theme swaps, or links fade while the
+   text around them snaps. Set and cleared by theme.ts. */
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
+}
+
 *,
 *::before,
 *::after {
@@ -63,6 +87,12 @@ body {
      position: sticky and confuses Lenis. clip contains overflow without that. */
   overflow-x: clip;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Grayscale smoothing thins light-on-dark text, which is the point; on paper it
+   just makes dark text spindly. */
+:root[data-theme="light"] body {
+  -webkit-font-smoothing: auto;
 }
 
 /* Everything readable sits above the backdrop, which is z-index 0. */
@@ -114,7 +144,7 @@ a:focus-visible {
 }
 
 ::selection {
-  background: rgba(134, 169, 78, 0.3);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--text);
 }
 

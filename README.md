@@ -48,7 +48,7 @@ src/
 ├── data/site.ts        Name, role, lede, about, links, experience, stack table
 ├── layouts/Base.astro  SEO head, JSON-LD, ClientRouter, all scroll JS
 ├── pages/              index, 404, robots.txt.ts, work/[...slug].astro
-├── scripts/            scramble.ts
+├── scripts/            scramble.ts, theme.ts
 └── styles/global.css   Tokens + shared primitives
 ```
 
@@ -82,4 +82,7 @@ src/
   the output is plain static files, so Vercel detects Astro, runs `npm run build`
   and serves `dist/`.
 
-- **Dark only.** `color-scheme: dark` is set and there's no light theme.
+- **Dark by default, with a light theme.** It follows the system setting until the
+  header toggle is used, then remembers the choice. An inline script in `<head>`
+  sets it before first paint, so there's no flash. The backdrop is the same in
+  both; light mode tints the paper with pale washes instead of adding light.

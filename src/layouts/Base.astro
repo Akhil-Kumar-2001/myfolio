@@ -40,6 +40,24 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
 
     <meta name="theme-color" content="#15171a" />
 
+    {/* Sync and before any stylesheet, or a light visitor sees a dark first
+        paint. "theme" and the light hex must match theme.ts and global.css. */}
+    <script is:inline>
+      (() => {
+        let t = null;
+        try {
+          t = localStorage.getItem("theme");
+        } catch {}
+        if (t !== "light" && t !== "dark") {
+          t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        }
+        document.documentElement.dataset.theme = t;
+        if (t === "light") {
+          document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#f3f1ea");
+        }
+      })();
+    </script>
+
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -160,6 +178,7 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
 <script>
   import Lenis from "lenis";
   import { initScramble, stopScramble } from "@/scripts/scramble";
+  import { initTheme } from "@/scripts/theme";
 
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -469,6 +488,7 @@ const ogImage = new URL("/og-image.png", Astro.site).href;
   });
 
   document.addEventListener("astro:page-load", () => {
+    initTheme();
     initScroll();
     stopProgress?.();
     initProgress();

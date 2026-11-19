@@ -136,7 +136,7 @@ const entries = (await getCollection("work", ({ data }) => data.published)).sort
     /* Clips the watermark numeral to the rounded corner — it bleeds past the
        bottom-right edge on purpose. */
     overflow: hidden;
-    background: rgba(29, 32, 36, 0.4);
+    background: color-mix(in srgb, var(--raised) 40%, transparent);
     transition:
       border-color 0.25s ease,
       background 0.25s ease;
@@ -210,7 +210,7 @@ const entries = (await getCollection("work", ({ data }) => data.published)).sort
 
   .card:hover {
     border-color: var(--faint);
-    background: rgba(29, 32, 36, 0.75);
+    background: color-mix(in srgb, var(--raised) 75%, transparent);
   }
 
   /* Keyboard focus lands on the inner link; lift the ring to the whole card. */
@@ -262,6 +262,35 @@ const entries = (await getCollection("work", ({ data }) => data.published)).sort
       linear-gradient(135deg, #1e232a 0%, #15171a 100%);
   }
 
+  /* Paper versions: same positions and hue roles, washed out to sit on --bg. */
+  :global([data-theme="light"]) .shape[data-v="0"] {
+    background:
+      radial-gradient(75% 110% at 15% 95%, #b4c78f 0%, transparent 60%),
+      radial-gradient(60% 90% at 85% 5%, #b3c3cc 0%, transparent 55%),
+      linear-gradient(155deg, #e2dfd4 0%, #ece9e0 100%);
+  }
+
+  :global([data-theme="light"]) .shape[data-v="1"] {
+    background:
+      radial-gradient(80% 100% at 80% 90%, #aec1ca 0%, transparent 62%),
+      radial-gradient(70% 80% at 10% 10%, #c3cea3 0%, transparent 58%),
+      linear-gradient(200deg, #e4e1d7 0%, #ece9e0 100%);
+  }
+
+  :global([data-theme="light"]) .shape[data-v="2"] {
+    background:
+      radial-gradient(90% 100% at 50% 100%, #b8c995 0%, transparent 58%),
+      radial-gradient(60% 70% at 15% 15%, #d6d3c7 0%, transparent 60%),
+      linear-gradient(170deg, #e6e3d9 0%, #ece9e0 100%);
+  }
+
+  :global([data-theme="light"]) .shape[data-v="3"] {
+    background:
+      radial-gradient(70% 95% at 92% 82%, #aec499 0%, transparent 60%),
+      radial-gradient(75% 85% at 18% 18%, #bccad1 0%, transparent 58%),
+      linear-gradient(135deg, #e3e0d6 0%, #ece9e0 100%);
+  }
+
   /* Grain. Needs the mid-tone gradients underneath; over near-black, overlay
      blending is a no-op. */
   .shape::after {
@@ -295,6 +324,11 @@ const entries = (await getCollection("work", ({ data }) => data.published)).sort
       opacity 0.35s ease,
       transform 0.45s var(--ease-out),
       letter-spacing 0.45s var(--ease-out);
+  }
+
+  /* A dark halo behind dark text would read as a smudge. */
+  :global([data-theme="light"]) .ghost {
+    text-shadow: 0 2px 18px color-mix(in srgb, var(--bg) 80%, transparent);
   }
 
   .card:hover .ghost,

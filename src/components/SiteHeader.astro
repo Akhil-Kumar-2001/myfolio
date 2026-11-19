@@ -37,6 +37,15 @@ const sections = [
       }
     </ul>
   </nav>
+
+  {/* Outside <nav>: it isn't navigation, and the scramble targets nav links.
+      The label is rewritten by theme.ts to name the theme it switches to. */}
+  <button class="theme" type="button" data-theme-toggle aria-label="Switch colour theme">
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+      <circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.2" />
+      <path d="M8 1.6a6.4 6.4 0 0 1 0 12.8z" fill="currentColor" />
+    </svg>
+  </button>
 </header>
 
 <style>
@@ -52,7 +61,7 @@ const sections = [
     /* Full bleed, not the 58rem shell — the name sits at the screen edge. */
     padding-inline: var(--gutter);
     border-bottom: 1px solid var(--rule);
-    background: rgba(21, 23, 26, 0.55);
+    background: color-mix(in srgb, var(--bg) 55%, transparent);
     backdrop-filter: blur(14px) saturate(1.15);
     -webkit-backdrop-filter: blur(14px) saturate(1.15);
     /* Own layer: the backdrop-filter otherwise repaints with the page. */
@@ -63,8 +72,55 @@ const sections = [
   /* Without blur support, translucency would just make the text unreadable. */
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .bar {
-      background: rgba(21, 23, 26, 0.94);
+      background: color-mix(in srgb, var(--bg) 94%, transparent);
     }
+  }
+
+  /* Pushes nav and toggle right together; space-between alone would centre the
+     nav between brand and toggle. */
+  nav {
+    margin-left: auto;
+  }
+
+  /* 44px target, but the negative margins keep the visible icon on the gutter
+     edge and the nav's rhythm rather than 14px inside it. */
+  .theme {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin: 0 -14px 0 -0.4rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--faint);
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+
+  .theme:hover {
+    color: var(--accent);
+  }
+
+  .theme:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -6px;
+    border-radius: 50%;
+  }
+
+  /* The filled half swaps sides with the theme. */
+  .theme svg {
+    transition: transform 0.45s var(--ease-out);
+  }
+
+  :global([data-theme="light"]) .theme svg {
+    transform: rotate(180deg);
+  }
+
+  /* Exempt from the swap-frame transition kill in global.css — this one is the
+     feedback that the click did something. */
+  :global(:root[data-theme-switching]) .theme svg {
+    transition: transform 0.45s var(--ease-out) !important;
   }
 
   /* Lower case, not uppercase — uppercase mono at this size read as shouting.
