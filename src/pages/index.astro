@@ -6,13 +6,20 @@ import WorkList from "@/components/WorkList.astro";
 import Experience from "@/components/Experience.astro";
 import StackTable from "@/components/StackTable.astro";
 import Contact from "@/components/Contact.astro";
-import { site } from "@/data/site";
+import { site, experience } from "@/data/site";
+
+const current = experience.find((r) => r.current);
 
 const schema = {
   "@context": "https://schema.org",
   "@type": "Person",
   name: site.name,
+  // The spelled-out name, so a search for it can find this page too.
+  alternateName: site.fullName,
   jobTitle: site.role,
+  ...(current && {
+    worksFor: { "@type": "Organization", name: current.company, url: current.url },
+  }),
   url: site.url,
   email: `mailto:${site.email}`,
   address: {

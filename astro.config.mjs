@@ -7,8 +7,10 @@ export default defineConfig({
   output: "static",
   integrations: [sitemap()],
   build: {
-    // Inline small stylesheets into the HTML so the first paint needs no extra request.
-    inlineStylesheets: "auto",
+    // "always", not "auto": auto only inlines files under 4KB, and both stylesheets
+    // are over, so first paint waited on two extra requests. Costs ~6.5KB gzip per
+    // page, which ClientRouter navigations fetch anyway.
+    inlineStylesheets: "always",
   },
   compressHTML: true,
   prefetch: {

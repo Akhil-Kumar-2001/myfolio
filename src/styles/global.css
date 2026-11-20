@@ -1,6 +1,9 @@
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/500.css";
-@import "@fontsource/ibm-plex-mono/400.css";
+/* Latin only. The per-weight entrypoints declare cyrillic, greek, latin-ext and
+   vietnamese too: dead @font-face blocks in the render-blocking CSS. These carry
+   no unicode-range, so a glyph outside latin falls back per character. */
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-500.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
 
 /* Charcoal and moss is the default; paper and moss below. data-theme is set
    before first paint by the inline script in Base.astro. */
@@ -11,7 +14,8 @@
   --raised: #1d2024;
   --text: #e7e5df;
   --soft: #8a8b85;
-  --faint: #7b7d77;
+  /* 4.75:1 on --bg. Was #7b7d77, 4.31:1, under AA for the 13px metadata. */
+  --faint: #82847e;
   --rule: #2a2d31;
   --accent: #86a94e;
   --bone: #d9cba3;
@@ -376,14 +380,15 @@ html.lenis body {
 /* ---- motion ---- */
 
 @media (prefers-reduced-motion: no-preference) {
-  /* Native scroll-driven reveal. Chrome/Edge/Safari. */
+  /* Scroll-driven fallback, only until the script runs (and for no-JS). */
   .reveal {
     animation: reveal linear both;
     animation-timeline: view();
     animation-range: entry 0% cover 35%;
   }
 
-  /* JS sets data-reveal-js when animation-timeline is unsupported (Firefox). */
+  /* initReveal sets data-reveal-js on every browser when motion is allowed: a
+     one-shot reveal, because view() snapped when the mobile URL bar moved. */
   [data-reveal-js] .reveal {
     animation: none;
     opacity: 0;

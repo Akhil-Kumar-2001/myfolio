@@ -7,7 +7,7 @@ a swipeable work carousel, and a case-study page generated from each project mar
 
 ## Live
 
-- Site — [myfolio-tau-five.vercel.app](https://myfolio-tau-five.vercel.app)
+- Site — [akhilkumars.com](https://akhilkumars.com)
 - Case studies — `/work/ridesense`, `/work/elevio`, `/work/sipsavvy`, `/work/aadhaarxtract`
 
 Built for `akhilkumars.com`, which is set as `site` in `astro.config.mjs` — so

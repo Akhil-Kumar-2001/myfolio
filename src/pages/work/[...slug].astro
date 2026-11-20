@@ -17,12 +17,16 @@ const { entry } = Astro.props as Props;
 const { Content } = await render(entry);
 const d = entry.data;
 
+// dateCreated must be a date: "2025 — present" fails validation, so take the year.
+const created = d.year.match(/\d{4}/)?.[0];
+
 const schema = {
   "@context": "https://schema.org",
   "@type": "CreativeWork",
   name: d.name,
+  url: new URL(`/work/${entry.id}/`, Astro.site).href,
   abstract: d.problem,
-  dateCreated: d.year,
+  ...(created && { dateCreated: created }),
   author: { "@type": "Person", name: site.name, url: site.url },
   keywords: d.stack.join(", "),
 };
