@@ -22,6 +22,10 @@ design/
 # stays out unless publishing it is a decision rather than an accident.
 CLAUDE.md
 
+# Claude Code project config (skills, settings). Local-only for the same reason
+# as CLAUDE.md: it's personal working setup, not part of the site.
+.claude/
+
 # environment
 .env
 .env.*

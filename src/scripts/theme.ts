@@ -47,9 +47,12 @@ function apply(theme: Theme) {
   requestAnimationFrame(() => requestAnimationFrame(() => delete root.dataset.themeSwitching));
 }
 
-/* Clicks during the reveal are swallowed by design: Chrome hit-tests a running
-   full-page transition as <html>, and pointer-events: none on the overlay does
-   not change that. A double-tap is one clean switch, never a flicker. */
+/* Chrome hit-tests a running full-page transition as <html>, so a click on the
+   toggle mid-reveal never reaches the button (pointer-events: none on the
+   overlay doesn't change that). onSwallowedClick catches those by position,
+   and toggle() queues them: the next circle plays once this one has finished.
+   Never two transitions at once — restarting the circle per click crashed
+   desktop Chrome's renderer (STATUS_BREAKPOINT) after a burst of clicks. */
 
 /** The reveal in flight. Anything that starts another transition (a click in
     the frame before this one starts, or a navigation) skips this one, and the
@@ -59,6 +62,9 @@ let revealing: ViewTransition | null = null;
     frame later, so a click in that frame reading data-theme would see the old
     theme and toggle the same way twice. */
 let revealTarget: Theme | null = null;
+/** The theme to reveal once the current circle finishes. Clicks during a reveal
+    land here; an even number cancels out back to null. */
+let pending: Theme | null = null;
 
 /** Viewport height with the mobile URL bar retracted (100lvh). */
 function largeViewportHeight(): number {
@@ -91,13 +97,14 @@ function reveal(from: HTMLElement, theme: Theme) {
   const vt = document.startViewTransition(() => apply(theme));
   revealing = vt;
   revealTarget = theme;
+  document.addEventListener("click", onSwallowedClick, true);
   vt.ready
     .then(() => {
       root.animate(
         { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${end}px at ${x}px ${y}px)`] },
         {
-          // The ease-out finishes the visible sweep in ~300ms; the page takes no
-          // clicks until it ends, so the tail is kept short.
+          // The ease-out finishes the visible sweep in ~300ms; other clicks are
+          // still swallowed until it ends, so the tail is kept short.
           duration: 550,
           easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
           pseudoElement: "::view-transition-new(root)",
@@ -112,23 +119,53 @@ function reveal(from: HTMLElement, theme: Theme) {
     revealing = null;
     revealTarget = null;
     delete root.dataset.themeReveal;
+    document.removeEventListener("click", onSwallowedClick, true);
+    // Only now, with this transition fully over, play the queued one.
+    const queued = pending;
+    pending = null;
+    if (queued && queued !== currentTheme()) {
+      const btn = document.querySelector<HTMLElement>("[data-theme-toggle]");
+      if (btn) reveal(btn, queued);
+      else apply(queued);
+    }
   });
 }
 
+/** Only clicks the transition redirected to <html>. One that reached the button
+    is onToggle's, and handling it here too would switch twice. */
+function onSwallowedClick(e: MouseEvent) {
+  if (!revealing || e.target !== root) return;
+  const btn = document.querySelector<HTMLElement>("[data-theme-toggle]");
+  if (!btn) return;
+  const r = btn.getBoundingClientRect();
+  if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+  toggle(btn);
+}
+
 function onToggle(e: MouseEvent) {
-  const from = revealTarget ?? currentTheme();
+  toggle(e.currentTarget as HTMLElement);
+}
+
+function toggle(btn: HTMLElement) {
+  const from = pending ?? revealTarget ?? currentTheme();
   const next: Theme = from === "light" ? "dark" : "light";
   try {
     localStorage.setItem(KEY, next);
   } catch {
     /* private mode — still switches, just won't be remembered */
   }
+  // Mid-reveal: queue it. Back to where the running circle is heading means the
+  // clicks cancelled out, so nothing more plays.
+  if (revealing) {
+    pending = next === revealTarget ? null : next;
+    return;
+  }
   // Instant where unsupported or unwanted; the reveal is decoration only.
   if (reduce.matches || typeof document.startViewTransition !== "function") {
     apply(next);
     return;
   }
-  reveal(e.currentTarget as HTMLElement, next);
+  reveal(btn, next);
 }
 
 /** Per page: the header is re-rendered on every navigation. */
@@ -144,6 +181,12 @@ export function initTheme() {
 /* Astro replaces every <html> attribute with the incoming page's, and the
    static HTML has no data-theme. Without this, every navigation flashes dark. */
 document.addEventListener("astro:before-swap", (e) => {
+  // A queued switch lands on the new page directly rather than animating there.
+  if (pending) {
+    const queued = pending;
+    pending = null;
+    apply(queued);
+  }
   e.newDocument.documentElement.dataset.theme = currentTheme();
   syncMeta(e.newDocument);
 });
